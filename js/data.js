@@ -41,6 +41,10 @@ const VACCINES = [
   { id: 'dtap5', vaccine: 'DTaP', dose: '5차', startM: 48, endM: 72, note: '만 4~6세' },
   { id: 'ipv4', vaccine: 'IPV', dose: '4차', startM: 48, endM: 72, note: '만 4~6세' },
   { id: 'mmr2', vaccine: 'MMR', dose: '2차', startM: 48, endM: 72, note: '만 4~6세' },
+  { id: 'je4', vaccine: '일본뇌염(불활성화)', dose: '4차', startM: 72, endM: 83, note: '만 6세' },
+  { id: 'tdap6', vaccine: 'Td/Tdap(파상풍·디프테리아)', dose: '6차', startM: 132, endM: 155, note: '만 11~12세' },
+  { id: 'hpv', vaccine: 'HPV(사람유두종바이러스)', dose: '1~2차', startM: 132, endM: 155, note: '만 11~12세, 대상 기준은 예방접종도우미 확인' },
+  { id: 'je5', vaccine: '일본뇌염(불활성화)', dose: '5차', startM: 144, endM: 155, note: '만 12세' },
 ];
 
 // ---- 영유아 건강검진 (국민건강보험공단) ----
