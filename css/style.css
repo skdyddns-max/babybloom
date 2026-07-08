@@ -185,6 +185,10 @@ header h1 .logo { color: var(--peach-deep); }
 .allergy-info li { margin-bottom: 5px; }
 .empty { font-size: 14px; color: var(--ink-soft); }
 
+/* ---- 캘린더 내보내기 ---- */
+.ics-btn { margin-top: 10px; width: 100%; padding: 13px; border: none; border-radius: 13px; background: linear-gradient(135deg, #4C8DF5, #6FA8FF); color: #fff; font-size: 15px; font-weight: 800; font-family: inherit; cursor: pointer; min-height: 48px; box-shadow: 0 3px 10px rgba(76, 141, 245, 0.3); }
+.ics-tip { margin-top: 7px; font-size: 12.5px !important; }
+
 /* ---- 세그먼트 (기록/주간 패턴) ---- */
 .seg { display: flex; gap: 6px; margin-top: 8px; background: #F1E9DC; border-radius: 12px; padding: 4px; }
 .seg-btn { flex: 1; border: none; border-radius: 9px; padding: 9px 0; font-size: 14.5px; font-weight: 700; font-family: inherit; background: transparent; color: var(--ink-soft); cursor: pointer; min-height: 42px; }

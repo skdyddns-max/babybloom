@@ -451,6 +451,45 @@ function renderRecord() {
   $('#allergy-list').innerHTML = ALLERGY_NOTES.map(n => `<li>${n}</li>`).join('');
 }
 
+// ---------- 캘린더(.ics) 내보내기 ----------
+function icsDate(d) { return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; }
+function icsEscape(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,'); }
+
+function buildICS() {
+  const nm = state.name || '아기';
+  const lines = [
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//BabyBloom//KR', 'CALSCALE:GREGORIAN',
+    `X-WR-CALNAME:${icsEscape(`베이비블룸 · ${nm}`)}`,
+  ];
+  const pushEvent = (uid, date, endDate, title, desc) => {
+    lines.push('BEGIN:VEVENT', `UID:${uid}@babybloom`,
+      `DTSTAMP:${icsDate(today())}T000000Z`,
+      `DTSTART;VALUE=DATE:${icsDate(date)}`,
+      `DTEND;VALUE=DATE:${icsDate(addDays(endDate || date, 1))}`,
+      `SUMMARY:${icsEscape(title)}`,
+      `DESCRIPTION:${icsEscape(desc + ' — 베이비블룸(참고용, 병원과 상담하세요)')}`,
+      'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEscape(title)}`, 'TRIGGER:-P1D', 'END:VALARM',
+      'END:VEVENT');
+  };
+  // 접종·검진: 완료 안 된 미래·진행 중 일정만
+  allEvents().forEach(ev => {
+    const st = eventStatus(ev);
+    if (st !== 'upcoming' && st !== 'open') return;
+    const icon = ev.type === 'checkup' ? '🩺' : '💉';
+    const range = ev.end > ev.start ? `기간: ${fmt(ev.start)}~${fmt(ev.end)}` : `권장일: ${fmt(ev.start)}`;
+    pushEvent(ev.id, ev.start, null, `${icon} ${nm} ${ev.label}`, `${range}${ev.note ? ' · ' + ev.note : ''}`);
+  });
+  // 원더윅스: 아직 안 온 도약기 시작일
+  const base = wwBase();
+  LEAPS.forEach(l => {
+    const s = addWeeks(base, l.startW), e = addWeeks(base, l.endW);
+    if (e < today()) return;
+    pushEvent(`leap${l.n}`, s, null, `🌩️ ${nm} 원더윅스 ${l.n}차 「${l.name}」 시작 예상`, `${fmtShort(s)}~${fmtShort(e)} (±1~2주 개인차)`);
+  });
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+
 // ---------- 이벤트 ----------
 document.addEventListener('DOMContentLoaded', () => {
   // 온보딩 제출
@@ -555,6 +594,17 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#in-due').value = state.due || '';
     $('#in-rota').value = state.rota || 'rotateq';
     $('#onboarding').hidden = false; $('#app').hidden = true;
+  });
+
+  // 캘린더 내보내기
+  $('#btn-ics').addEventListener('click', () => {
+    if (!state) return;
+    const blob = new Blob([buildICS()], { type: 'text/calendar;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `babybloom-${state.name || '아기'}-일정.ics`;
+    a.click();
+    URL.revokeObjectURL(a.href);
   });
 
   // 데이터 백업 / 복원
