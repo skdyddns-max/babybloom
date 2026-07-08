@@ -1,5 +1,5 @@
 /* BabyBloom 서비스워커 — 오프라인 캐시 (앱 셸 cache-first + 백그라운드 갱신) */
-const VERSION = 'babybloom-v1';
+const VERSION = 'babybloom-v2';
 const SHELL = [
   './',
   './index.html',

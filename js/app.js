@@ -109,23 +109,23 @@ function renderHome() {
   const josa = last >= 0xAC00 && last <= 0xD7A3 && (last - 0xAC00) % 28 !== 0 ? '과' : '와';
   $('#home-name').textContent = nm + josa;
   $('#home-dday').textContent = `D+${d}`;
-  let sub = `생후 ${w}주 · ${m}개월`;
+  const subChips = [`생후 ${w}주`, `${m}개월`];
   if (state.due && state.due !== state.birth) {
     const cw = Math.floor(daysBetween(wwBase(), today()) / 7);
-    sub += ` (교정 ${cw}주)`;
+    subChips.push(`교정 ${cw}주`);
   }
-  $('#home-sub').textContent = sub;
+  $('#home-sub').innerHTML = subChips.map(c => `<span>${c}</span>`).join('');
 
   const cards = [];
   // 1) 원더윅스
   const leap = currentLeap(), next = nextLeap();
   if (leap) {
     cards.push(card('🌩️', `원더윅스 ${leap.n}차 도약기 진행 중`,
-      `<b>「${leap.name}」</b> ${leap.baby}<br><span class="tip">💡 ${leap.tip}</span>`));
+      `<b>「${leap.name}」</b> ${leap.baby}<br><span class="tip">💡 ${leap.tip}</span>`, '', '#7048E8'));
   } else if (next) {
     const dd = daysBetween(today(), addWeeks(wwBase(), next.startW));
     cards.push(card('🌤️', `지금은 맑음! 다음 도약기까지 ${dd}일`,
-      `${next.n}차 「${next.name}」 — ${fmt(addWeeks(wwBase(), next.startW))}경 시작 예상`));
+      `${next.n}차 「${next.name}」 — ${fmt(addWeeks(wwBase(), next.startW))}경 시작 예상`, '', '#7048E8'));
   }
   // 2) 놓친 접종·검진
   const events = allEvents();
@@ -133,45 +133,48 @@ function renderHome() {
   if (overdue.length) {
     cards.push(card('⚠️', `지난 일정 ${overdue.length}건 미체크`,
       overdue.slice(0, 3).map(ev => ev.label).join(', ') + (overdue.length > 3 ? ' 외' : '') +
-      '<br><span class="tip">완료했다면 일정 탭에서 체크해주세요. 놓쳤다면 병원과 따라잡기 일정을 상담하세요.</span>', 'warn'));
+      '<br><span class="tip">완료했다면 일정 탭에서 체크해주세요. 놓쳤다면 병원과 따라잡기 일정을 상담하세요.</span>', 'warn', '#D6336C'));
   }
   // 3) 접종 가능 기간 + 30일 내 다가오는 일정
   const openNow = events.filter(ev => eventStatus(ev) === 'open');
   const soon = events.filter(ev => eventStatus(ev) === 'upcoming' && daysBetween(today(), ev.start) <= 30);
   if (openNow.length) {
     cards.push(card('💉', '지금 접종·검진 가능 기간',
-      openNow.map(ev => `${ev.label} <span class="date">(${ev.end > ev.start ? `~${fmt(ev.end)}` : `권장일 ${fmt(ev.start)}`})</span>`).join('<br>')));
+      openNow.map(ev => `${ev.label} <span class="date">(${ev.end > ev.start ? `~${fmt(ev.end)}` : `권장일 ${fmt(ev.start)}`})</span>`).join('<br>'), '', '#2B8A3E'));
   }
   if (soon.length) {
     cards.push(card('🗓️', '30일 안에 다가와요',
-      soon.map(ev => `${ev.label} <span class="date">${fmt(ev.start)}${ev.end > ev.start ? '~' : ''}</span>`).join('<br>')));
+      soon.map(ev => `${ev.label} <span class="date">${fmt(ev.start)}${ev.end > ev.start ? '~' : ''}</span>`).join('<br>'), '', '#F59F00'));
   }
   // 4) 기록 기반 비서 카드 (배변 경고 / 오늘 수유 / 알레르기 관찰)
   const tISO = isoDate(today());
   const poopToday = state.records.poop.filter(p => p.d === tISO);
   const dangerPoop = poopToday.map(p => POOP_COLORS.find(c => c.id === p.color)).find(c => c && c.level === 'danger');
   if (dangerPoop) {
-    cards.push(card('💩', `오늘 배변 색(${dangerPoop.name}) 확인 필요`, `${dangerPoop.note}`, 'warn'));
+    cards.push(card('💩', `오늘 배변 색(${dangerPoop.name}) 확인 필요`, `${dangerPoop.note}`, 'warn', '#D6336C'));
   }
   const feedToday = state.records.feed.filter(f => f.d === tISO);
   if (feedToday.length) {
-    cards.push(card('🍼', '오늘 수유', feedSummary(feedToday) + `<br><a href="#" class="link" data-goto="record">기록 탭에서 자세히 →</a>`));
+    cards.push(card('🍼', '오늘 수유', feedSummary(feedToday) + `<br><a href="#" class="link" data-goto="record">기록 탭에서 자세히 →</a>`, '', '#F59F00'));
   }
   const watching = state.records.solids.filter(s => s.status === 'watch');
   if (watching.length) {
-    cards.push(card('🥣', '알레르기 관찰 중인 새 재료', watching.map(s => `${s.name} (${daysBetween(parseDate(s.start), today()) + 1}일차/3일)`).join(', ')));
+    cards.push(card('🥣', '알레르기 관찰 중인 새 재료', watching.map(s => `${s.name} (${daysBetween(parseDate(s.start), today()) + 1}일차/3일)`).join(', '), '', '#1C7ED6'));
   }
   // 5) 언어발달
   const lang = currentLangStage();
   if (lang) {
     cards.push(card('🗣️', lang.title, `${lang.items[0]}<br><span class="tip">💡 ${lang.parentTip}</span>
-      <br><a href="#" class="link" data-goto="lang">발달 탭에서 체크하기 →</a>`));
+      <br><a href="#" class="link" data-goto="lang">발달 탭에서 체크하기 →</a>`, '', '#2B8A3E'));
   }
   $('#home-cards').innerHTML = cards.join('');
 }
 
-function card(emoji, title, body, cls = '') {
-  return `<div class="card ${cls}"><div class="card-title">${emoji} ${title}</div><div class="card-body">${body}</div></div>`;
+function card(emoji, title, body, cls = '', accent = '#E8590C') {
+  return `<div class="card ${cls}" style="--ac:${accent}">
+    <div class="card-ico">${emoji}</div>
+    <div class="card-main"><div class="card-title">${title}</div><div class="card-body">${body}</div></div>
+  </div>`;
 }
 
 function renderSchedule() {
@@ -329,9 +332,9 @@ function renderDayLog() {
     return `<div class="day-group">
       <div class="day-head ${isToday ? 'today' : ''}"><b>${dt.getMonth() + 1}월 ${dt.getDate()}일 (${dayName})${isToday ? ' · 오늘' : ''}</b><span>${totals.join(' · ')}</span></div>
       ${evs.map(e => `<div class="evt ${e.level === 'danger' ? 'danger' : ''}">
-        <span class="evt-dot" style="background:${CATS[e.kind].c}"></span>
+        <span class="evt-ico" style="background:${CATS[e.kind].c}1F; border-color:${CATS[e.kind].c}55">${CATS[e.kind].e}</span>
         <span class="evt-time">${e.t || ''}</span>
-        <span class="evt-text">${CATS[e.kind].e} ${e.text}</span>
+        <span class="evt-text">${e.text}</span>
         <button type="button" class="rec-del" data-del="${e.coll}" data-idx="${e.idx}">✕</button>
       </div>`).join('')}
     </div>`;
