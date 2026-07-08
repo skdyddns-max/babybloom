@@ -6,6 +6,13 @@
   <title>베이비블룸 — 우리 아기 육아비서 달력</title>
   <meta name="description" content="아기 생년월일만 입력하면 예방접종·원더윅스·영유아검진·언어발달 체크포인트가 자동으로 채워지는 육아비서 달력">
   <meta name="theme-color" content="#FDF8F2">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="베이비블룸">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -35,6 +42,16 @@
       </label>
       <button type="submit">일정 자동으로 만들기 ✨</button>
     </form>
+
+    <div class="backup-box">
+      <h4>💾 데이터 백업 · 복원</h4>
+      <p>기록은 이 기기에만 저장돼요. 폰을 바꾸거나 지울 때를 대비해 백업해두세요.</p>
+      <div class="backup-btns">
+        <button type="button" id="btn-export">백업 파일 저장</button>
+        <button type="button" id="btn-import">백업 불러오기</button>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
+      </div>
+    </div>
   </section>
 
   <!-- 앱 본체 -->

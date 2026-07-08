@@ -554,6 +554,39 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#onboarding').hidden = false; $('#app').hidden = true;
   });
 
+  // 데이터 백업 / 복원
+  $('#btn-export').addEventListener('click', () => {
+    if (!state) { alert('저장된 데이터가 없어요.'); return; }
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `babybloom-backup-${isoDate(today())}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  $('#btn-import').addEventListener('click', () => $('#import-file').click());
+  $('#import-file').addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const s = JSON.parse(reader.result);
+        if (!s || !s.birth) throw new Error('형식 오류');
+        s.records = Object.assign({}, EMPTY_RECORDS, s.records);
+        state = s; saveState(state); render();
+        alert('백업을 불러왔어요! 🌷');
+      } catch { alert('올바른 백업 파일이 아니에요.'); }
+      e.target.value = '';
+    };
+    reader.readAsText(f);
+  });
+
+  // PWA 서비스워커 등록 (오프라인 지원)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+
   render();
 });
 

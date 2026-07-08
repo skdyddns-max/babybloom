@@ -51,6 +51,12 @@ header h1 .logo { color: var(--peach-deep); }
   font-size: 17px; font-weight: 800; cursor: pointer; font-family: inherit;
 }
 
+.backup-box { margin-top: 30px; border-top: 1.5px dashed var(--line); padding-top: 18px; }
+.backup-box h4 { font-size: 15px; margin-bottom: 4px; }
+.backup-box p { font-size: 13.5px; color: var(--ink-soft); margin-bottom: 10px; }
+.backup-btns { display: flex; gap: 8px; }
+.backup-btns button { flex: 1; padding: 12px; border: 1.5px solid #D9C9B2; background: #fff; border-radius: 11px; font-size: 14px; font-weight: 700; color: var(--ink); cursor: pointer; font-family: inherit; min-height: 46px; }
+
 /* ---- 홈 히어로 ---- */
 .hero {
   margin: 10px 16px 16px; padding: 24px 22px;
