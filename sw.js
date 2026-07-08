@@ -1,11 +1,13 @@
 /* BabyBloom 서비스워커 — 오프라인 캐시 (앱 셸 cache-first + 백그라운드 갱신) */
-const VERSION = 'babybloom-v3';
+const VERSION = 'babybloom-v4';
 const SHELL = [
   './',
   './index.html',
   './css/style.css',
+  './js/config.js',
   './js/data.js',
   './js/app.js',
+  './js/sync.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',

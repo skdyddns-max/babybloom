@@ -23,7 +23,10 @@ function loadState() {
     return s;
   } catch { return null; }
 }
-function saveState(s) { localStorage.setItem(LS_KEY, JSON.stringify(s)); }
+function saveState(s) {
+  localStorage.setItem(LS_KEY, JSON.stringify(s));
+  if (typeof scheduleFamilyPush === 'function') scheduleFamilyPush();
+}
 let state = loadState();
 
 // ---------- 날짜 유틸 ----------
@@ -100,6 +103,7 @@ function render() {
   if (!state || !state.birth) { $('#onboarding').hidden = false; $('#app').hidden = true; return; }
   $('#onboarding').hidden = true; $('#app').hidden = false;
   renderHome(); renderSchedule(); renderLeaps(); renderLang(); renderRecord();
+  if (typeof renderFamily === 'function') renderFamily();
 }
 
 function renderHome() {
