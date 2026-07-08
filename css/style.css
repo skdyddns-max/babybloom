@@ -6,11 +6,11 @@
   --ink: #362D24;          /* 본문: 더 진하게 */
   --ink-soft: #6E6053;     /* 보조 텍스트: 대비 확보 */
   --peach: #F5C9A8;
-  --peach-deep: #D9762F;   /* 포인트: 채도·명도 대비 강화 */
+  --peach-deep: #E8590C;   /* 포인트: 원색 주황 */
   --sage: #A8C3A0;
-  --sage-deep: #46703B;    /* 팁 텍스트: 흰 배경 대비 강화 */
+  --sage-deep: #2B8A3E;    /* 팁 텍스트: 원색 초록 */
   --rose: #E9A0A0;
-  --red-text: #A93B32;
+  --red-text: #D6336C;     /* 경고: 원색 */
   --line: #EADCC9;
   --radius: 16px;
 }
@@ -141,6 +141,7 @@ header h1 .logo { color: var(--peach-deep); }
 .inline-form { display: flex; gap: 8px; margin-bottom: 11px; }
 .inline-form select, .inline-form input { border: 1.5px solid #D9C9B2; border-radius: 10px; padding: 10px 11px; font-size: 16px; font-family: inherit; background: #fff; color: var(--ink); min-width: 0; min-height: 48px; }
 .inline-form input { flex: 1; }
+.inline-form input[type="time"] { flex: 0 0 96px; padding: 10px 6px; }
 .inline-form button { border: none; background: var(--peach-deep); color: #fff; border-radius: 10px; padding: 10px 15px; font-weight: 800; font-size: 14.5px; cursor: pointer; font-family: inherit; white-space: nowrap; min-height: 48px; }
 .stats-box { background: #FAF5EC; border-radius: 11px; padding: 11px 14px; font-size: 14.5px; margin-bottom: 10px; }
 .warn-text { color: var(--red-text); font-size: 13.5px; font-weight: 600; }
@@ -150,6 +151,52 @@ header h1 .logo { color: var(--peach-deep); }
 .allergy-info ul { margin: 8px 0 2px 19px; font-size: 14px; color: var(--ink); }
 .allergy-info li { margin-bottom: 5px; }
 .empty { font-size: 14px; color: var(--ink-soft); }
+
+/* ---- 세그먼트 (기록/주간 패턴) ---- */
+.seg { display: flex; gap: 6px; margin-top: 8px; background: #F1E9DC; border-radius: 12px; padding: 4px; }
+.seg-btn { flex: 1; border: none; border-radius: 9px; padding: 9px 0; font-size: 14.5px; font-weight: 700; font-family: inherit; background: transparent; color: var(--ink-soft); cursor: pointer; min-height: 42px; }
+.seg-btn.active { background: #fff; color: var(--peach-deep); box-shadow: 0 1px 4px rgba(74,63,53,.12); }
+
+/* ---- 마지막 요약 칩 ---- */
+.last-summary { display: flex; flex-wrap: wrap; gap: 7px; margin: 0 16px 12px; }
+.chip { background: #fff; border: 1.5px solid var(--line); border-left: 4px solid var(--cc, var(--line)); border-radius: 10px; padding: 7px 11px; font-size: 13.5px; color: var(--ink); }
+.chip b { color: var(--cc, var(--ink)); }
+
+/* ---- 원형 퀵기록 버튼 ---- */
+.quick-row { display: flex; gap: 6px; overflow-x: auto; padding: 2px 16px 12px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.quick-row::-webkit-scrollbar { display: none; }
+.quick { flex-shrink: 0; width: 66px; min-height: 78px; border: none; background: none; font-family: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 13px; font-weight: 700; color: var(--ink); }
+.quick .q-ico { width: 54px; height: 54px; border-radius: 50%; background: var(--cc); display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 2px 6px rgba(0,0,0,.14); }
+.quick:active .q-ico { transform: scale(0.93); }
+.quick.on .q-ico { outline: 3px solid var(--cc); outline-offset: 2px; }
+
+/* ---- 일별 통합 로그 ---- */
+.day-group { margin-bottom: 14px; }
+.day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; background: #F6EFE3; border-radius: 9px; padding: 8px 12px; margin-bottom: 7px; font-size: 14px; }
+.day-head.today { background: #FDEBDD; }
+.day-head span { color: var(--ink-soft); font-size: 13px; font-weight: 600; text-align: right; }
+.evt { display: flex; align-items: center; gap: 9px; padding: 8px 6px 8px 4px; border-bottom: 1px solid #F3ECDF; font-size: 14.5px; }
+.evt.danger { background: #FFF5F8; border-radius: 8px; }
+.evt-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.evt-time { color: var(--ink-soft); font-size: 13px; font-weight: 700; width: 44px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.evt-text { flex: 1; min-width: 0; }
+
+/* ---- 주간 패턴 차트 ---- */
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-soft); font-weight: 600; margin: 6px 0 10px; }
+.legend i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; margin-right: 4px; vertical-align: middle; }
+.chart { display: flex; gap: 6px; }
+.chart-hours { position: relative; width: 26px; height: 432px; flex-shrink: 0; }
+.chart-hours span { position: absolute; right: 2px; transform: translateY(-50%); font-size: 11px; color: var(--ink-soft); font-weight: 600; }
+.chart-grid { display: flex; gap: 4px; flex: 1; }
+.chart-day { flex: 1; min-width: 0; }
+.chart-col { position: relative; height: 432px; background: #F4EFE6;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 107px, #E4DACA 107px 108px);
+  border-radius: 7px; overflow: hidden; }
+.m-bar { position: absolute; left: 12%; width: 76%; height: 5px; border-radius: 3px; transform: translateY(-50%); }
+.m-poop { position: absolute; left: 50%; transform: translate(-50%, -50%); font-size: 14px; line-height: 1; }
+.m-sleep { position: absolute; left: 6%; width: 88%; background: rgba(112, 72, 232, .3); border-radius: 5px; }
+.chart-label { text-align: center; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); margin-top: 5px; }
+.chart-label.today { color: var(--peach-deep); }
 
 /* ---- 하단 탭바 ---- */
 nav {

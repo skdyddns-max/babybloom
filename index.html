@@ -84,16 +84,16 @@
     <!-- 기록 -->
     <section class="panel" id="panel-record" hidden>
       <div class="panel-head">
-        <h2>📔 오늘의 기록</h2>
-        <p>기록하면 비서가 비교·통계·관찰을 대신해드려요. (참고용, 진단이 아니에요)</p>
+        <h2>📔 기록</h2>
+        <div class="seg">
+          <button type="button" class="seg-btn active" data-view="rec">기록하기</button>
+          <button type="button" class="seg-btn" data-view="pattern">주간 패턴</button>
+        </div>
       </div>
 
-      <div class="rec-block">
-        <h3>💩 배변 색 체크</h3>
-        <p class="rec-sub">오늘 기저귀 색을 눌러 기록하세요. 이전 기록과 자동으로 비교해드려요.</p>
-        <div id="poop-colors" class="swatches"></div>
-        <div id="poop-log"></div>
-      </div>
+      <div id="view-rec">
+      <div id="last-summary" class="last-summary"></div>
+      <div id="quick-row" class="quick-row"></div>
 
       <div class="rec-block">
         <h3>🍼 수유 기록</h3>
@@ -105,10 +105,17 @@
             <option value="이유식">이유식(g)</option>
           </select>
           <input type="number" id="feed-amt" min="0" max="1000" placeholder="양">
-          <button type="submit">＋ 기록</button>
+          <input type="time" id="feed-time" title="시간 (비우면 지금)">
+          <button type="submit">＋</button>
         </form>
         <div id="feed-stats" class="stats-box"></div>
-        <div id="feed-log"></div>
+      </div>
+
+      <div class="rec-block">
+        <h3>💩 배변 색 체크</h3>
+        <p class="rec-sub">오늘 기저귀 색을 눌러 기록하세요. 이전 기록과 자동으로 비교해드려요.</p>
+        <div id="poop-colors" class="swatches"></div>
+        <div id="poop-log"></div>
       </div>
 
       <div class="rec-block">
@@ -123,6 +130,25 @@
           <summary>⚠️ 알레르기 꼭 알아두기</summary>
           <ul id="allergy-list"></ul>
         </details>
+      </div>
+
+      <div class="rec-block">
+        <h3>🗓️ 최근 7일 기록</h3>
+        <div id="day-log"></div>
+      </div>
+      </div><!-- /view-rec -->
+
+      <div id="view-pattern" hidden>
+        <div class="rec-block">
+          <h3>주간 패턴 <small class="rec-sub" style="display:inline">· 세로축 = 시간</small></h3>
+          <div class="legend">
+            <span><i style="background:#F59F00"></i>수유</span>
+            <span><i style="background:#22B8CF"></i>소변</span>
+            <span>💩 대변</span>
+            <span><i style="background:rgba(112,72,232,.35)"></i>수면</span>
+          </div>
+          <div id="chart" class="chart"></div>
+        </div>
       </div>
     </section>
 

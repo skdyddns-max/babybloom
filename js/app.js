@@ -2,12 +2,24 @@
 
 const LS_KEY = 'babybloom';
 const DAY = 24 * 60 * 60 * 1000;
+const EMPTY_RECORDS = { poop: [], feed: [], solids: [], pee: [], sleep: [] };
+
+// 카테고리 원색 (시인성 우선)
+const CATS = {
+  '모유': { c: '#E64980', e: '🤱' },
+  '분유': { c: '#F59F00', e: '🍼' },
+  '유축': { c: '#2F9E44', e: '🥛' },
+  '이유식': { c: '#1C7ED6', e: '🥣' },
+  '소변': { c: '#22B8CF', e: '💧' },
+  '대변': { c: '#8D6E63', e: '💩' },
+  '수면': { c: '#7048E8', e: '😴' },
+};
 
 // ---------- 상태 ----------
 function loadState() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY)) || null;
-    if (s) s.records = Object.assign({ poop: [], feed: [], solids: [] }, s.records);
+    if (s) s.records = Object.assign({}, EMPTY_RECORDS, s.records);
     return s;
   } catch { return null; }
 }
@@ -233,8 +245,148 @@ function feedSummary(entries) {
     `${t} ${v.n}회${v.amt ? ` · ${v.amt}${t === '모유' ? '분' : t === '이유식' ? 'g' : 'ml'}` : ''}`).join(' / ');
 }
 
+// 기록 이벤트 유틸
+function dtOf(e) { return new Date(`${e.d}T${e.t || '00:00'}`); }
+function timeAgo(dt) {
+  const m = Math.floor((new Date() - dt) / 60000);
+  if (m < 1) return '방금';
+  if (m < 60) return `${m}분 전`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}시간 ${m % 60}분 전`;
+  const d = Math.floor(h / 24);
+  return `${d}일 ${h % 24}시간 전`;
+}
+function latestOf(arr) { return arr.length ? arr.reduce((a, b) => dtOf(a) >= dtOf(b) ? a : b) : null; }
+// 수면 상태: 마지막 이벤트가 '잠듦'이면 자는 중
+function sleepState() {
+  const ev = state.records.sleep;
+  const last = ev.length ? ev[ev.length - 1] : null;
+  return { asleep: !!last && last.ev === 'sleep', last };
+}
+// 잠듦→기상 짝 지어 세션 목록으로 (자는 중이면 end=null)
+function sleepSessions() {
+  const out = [];
+  let open = null;
+  for (const e of state.records.sleep) {
+    if (e.ev === 'sleep') { if (open) out.push({ start: open, end: null }); open = e; }
+    else if (open) { out.push({ start: open, end: e }); open = null; }
+  }
+  if (open) out.push({ start: open, end: null });
+  return out;
+}
+// 모든 기록을 통합 이벤트로 (일별 로그·차트용)
+function allRecordEvents() {
+  const r = state.records, out = [];
+  r.feed.forEach((f, i) => out.push({ kind: f.type, d: f.d, t: f.t, coll: 'feed', idx: i,
+    text: `${f.type}${f.amt ? ` ${f.amt}${f.type === '모유' ? '분' : f.type === '이유식' ? 'g' : 'ml'}` : ''}` }));
+  r.pee.forEach((p, i) => out.push({ kind: '소변', d: p.d, t: p.t, coll: 'pee', idx: i, text: '소변' }));
+  r.poop.forEach((p, i) => {
+    const c = POOP_COLORS.find(x => x.id === p.color);
+    out.push({ kind: '대변', d: p.d, t: p.t, coll: 'poop', idx: i, text: `대변 · ${c ? c.name : ''}`, level: c && c.level });
+  });
+  r.sleep.forEach((s, i) => out.push({ kind: '수면', d: s.d, t: s.t, coll: 'sleep', idx: i, text: s.ev === 'sleep' ? '잠듦' : '기상' }));
+  return out;
+}
+
+function renderLastSummary() {
+  const r = state.records;
+  const chips = [];
+  const lastFeed = latestOf(r.feed);
+  chips.push(`<span class="chip" style="--cc:${CATS['분유'].c}">🍼 마지막 수유 <b>${lastFeed ? timeAgo(dtOf(lastFeed)) : '기록 없음'}</b></span>`);
+  const lastDiaper = latestOf([...r.pee.map(p => ({ ...p, k: '소변' })), ...r.poop.map(p => ({ ...p, k: '대변' }))]);
+  chips.push(`<span class="chip" style="--cc:${CATS['대변'].c}">💧 마지막 기저귀 <b>${lastDiaper ? `${timeAgo(dtOf(lastDiaper))} (${lastDiaper.k})` : '기록 없음'}</b></span>`);
+  const ss = sleepState();
+  chips.push(`<span class="chip" style="--cc:${CATS['수면'].c}">😴 ${ss.asleep ? `자는 중 · <b>${timeAgo(dtOf(ss.last)).replace(' 전', '째')}</b>` : `마지막 잠 <b>${ss.last ? timeAgo(dtOf(ss.last)) : '기록 없음'}</b>`}</span>`);
+  $('#last-summary').innerHTML = chips.join('');
+}
+
+function renderQuickRow() {
+  const ss = sleepState();
+  const btns = ['모유', '분유', '유축', '이유식'].map(t =>
+    `<button type="button" class="quick" data-quick="feed" data-type="${t}" style="--cc:${CATS[t].c}"><span class="q-ico">${CATS[t].e}</span>${t}</button>`);
+  btns.push(`<button type="button" class="quick" data-quick="pee" style="--cc:${CATS['소변'].c}"><span class="q-ico">💧</span>소변</button>`);
+  btns.push(`<button type="button" class="quick" data-quick="poop" style="--cc:${CATS['대변'].c}"><span class="q-ico">💩</span>대변</button>`);
+  btns.push(`<button type="button" class="quick ${ss.asleep ? 'on' : ''}" data-quick="sleep" style="--cc:${CATS['수면'].c}"><span class="q-ico">${ss.asleep ? '🌞' : '😴'}</span>${ss.asleep ? '기상' : '잠듦'}</button>`);
+  $('#quick-row').innerHTML = btns.join('');
+}
+
+function renderDayLog() {
+  const events = allRecordEvents();
+  const days = [];
+  for (let i = 0; i < 7; i++) days.push(isoDate(addDays(today(), -i)));
+  const html = days.map(d => {
+    const evs = events.filter(e => e.d === d).sort((a, b) => (b.t || '').localeCompare(a.t || ''));
+    if (!evs.length) return '';
+    const feeds = state.records.feed.filter(f => f.d === d);
+    const totals = [];
+    if (feeds.length) totals.push(feedSummary(feeds));
+    const poopN = state.records.poop.filter(p => p.d === d).length;
+    const peeN = state.records.pee.filter(p => p.d === d).length;
+    if (poopN || peeN) totals.push(`기저귀 ${poopN + peeN}회`);
+    const dt = parseDate(d);
+    const dayName = ['일', '월', '화', '수', '목', '금', '토'][dt.getDay()];
+    const isToday = d === isoDate(today());
+    return `<div class="day-group">
+      <div class="day-head ${isToday ? 'today' : ''}"><b>${dt.getMonth() + 1}월 ${dt.getDate()}일 (${dayName})${isToday ? ' · 오늘' : ''}</b><span>${totals.join(' · ')}</span></div>
+      ${evs.map(e => `<div class="evt ${e.level === 'danger' ? 'danger' : ''}">
+        <span class="evt-dot" style="background:${CATS[e.kind].c}"></span>
+        <span class="evt-time">${e.t || ''}</span>
+        <span class="evt-text">${CATS[e.kind].e} ${e.text}</span>
+        <button type="button" class="rec-del" data-del="${e.coll}" data-idx="${e.idx}">✕</button>
+      </div>`).join('')}
+    </div>`;
+  }).filter(Boolean).join('');
+  $('#day-log').innerHTML = html || '<p class="empty">최근 7일 기록이 없어요. 위의 버튼으로 기록을 시작해보세요.</p>';
+}
+
+function renderChart() {
+  const events = allRecordEvents();
+  const days = [];
+  for (let i = 6; i >= 0; i--) days.push(isoDate(addDays(today(), -i)));
+  const topPct = t => { const [h, m] = (t || '00:00').split(':').map(Number); return (h + m / 60) / 24 * 100; };
+  // 수면 블록: 세션을 날짜별로 자르기
+  const sleepBlocks = {};
+  for (const s of sleepSessions()) {
+    const start = dtOf(s.start);
+    const end = s.end ? dtOf(s.end) : new Date();
+    let cur = new Date(start);
+    while (cur < end) {
+      const dISO = isoDate(cur);
+      const dayEnd = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate() + 1);
+      const segEnd = end < dayEnd ? end : dayEnd;
+      const t0 = (cur.getHours() + cur.getMinutes() / 60) / 24 * 100;
+      const t1 = (segEnd.getHours() + segEnd.getMinutes() / 60) / 24 * 100 || 100;
+      (sleepBlocks[dISO] = sleepBlocks[dISO] || []).push({ top: t0, h: Math.max(t1 - t0, 0.8) });
+      cur = dayEnd;
+    }
+  }
+  const cols = days.map(d => {
+    const dt = parseDate(d);
+    const isToday = d === isoDate(today());
+    const evs = events.filter(e => e.d === d);
+    const marks = [];
+    (sleepBlocks[d] || []).forEach(b => marks.push(`<div class="m-sleep" style="top:${b.top}%;height:${b.h}%"></div>`));
+    evs.forEach(e => {
+      if (e.kind === '수면') return;
+      const top = topPct(e.t);
+      if (e.kind === '대변') marks.push(`<div class="m-poop" style="top:${top}%">💩</div>`);
+      else if (e.kind === '소변') marks.push(`<div class="m-bar" style="top:${top}%;background:${CATS['소변'].c};height:3px"></div>`);
+      else marks.push(`<div class="m-bar" style="top:${top}%;background:${CATS[e.kind].c}" title="${e.text}"></div>`);
+    });
+    return `<div class="chart-day">
+      <div class="chart-col">${marks.join('')}</div>
+      <div class="chart-label ${isToday ? 'today' : ''}">${dt.getDate()}일</div>
+    </div>`;
+  }).join('');
+  $('#chart').innerHTML = `
+    <div class="chart-hours">${[0, 6, 12, 18, 24].map(h => `<span style="top:${h / 24 * 100}%">${String(h).padStart(2, '0')}</span>`).join('')}</div>
+    <div class="chart-grid">${cols}</div>`;
+}
+
 function renderRecord() {
   const tISO = isoDate(today());
+  renderLastSummary(); renderQuickRow(); renderDayLog();
+  if (!$('#view-pattern').hidden) renderChart();
 
   // --- 배변 ---
   $('#poop-colors').innerHTML = POOP_COLORS.map(c =>
@@ -273,11 +425,6 @@ function renderRecord() {
     }
   }
   $('#feed-stats').innerHTML = stats;
-  $('#feed-log').innerHTML = feedToday.slice(-6).reverse().map(f => {
-    const idx = feed.indexOf(f);
-    return `<div class="rec-item"><span class="rec-main">${f.t} · ${f.type}${f.amt ? ` ${f.amt}${f.type === '모유' ? '분' : f.type === '이유식' ? 'g' : 'ml'}` : ''}</span>
-      <button type="button" class="rec-del" data-del="feed" data-idx="${idx}">✕</button></div>`;
-  }).join('');
 
   // --- 이유식 단계 + 알레르기 ---
   const m = ageMonths();
@@ -312,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state = {
       name, birth: birthV, due: $('#in-due').value || '', rota: $('#in-rota').value,
       done: (state && state.done) || {},
-      records: (state && state.records) || { poop: [], feed: [], solids: [] },
+      records: Object.assign({}, EMPTY_RECORDS, state && state.records),
     };
     saveState(state); render();
   });
@@ -337,6 +484,33 @@ document.addEventListener('DOMContentLoaded', () => {
       state.records.poop.push({ d: isoDate(today()), t: nowTime(), color: sw.dataset.poop });
       saveState(state); renderRecord(); renderHome(); return;
     }
+    const qk = e.target.closest('[data-quick]');
+    if (qk) {
+      const q = qk.dataset.quick;
+      if (q === 'feed') {
+        $('#feed-type').value = qk.dataset.type;
+        document.querySelector('#feed-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        $('#feed-amt').focus();
+      } else if (q === 'pee') {
+        state.records.pee.push({ d: isoDate(today()), t: nowTime() });
+        saveState(state); renderRecord();
+      } else if (q === 'poop') {
+        document.querySelector('#poop-colors').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else if (q === 'sleep') {
+        const ev = sleepState().asleep ? 'wake' : 'sleep';
+        state.records.sleep.push({ d: isoDate(today()), t: nowTime(), ev });
+        saveState(state); renderRecord();
+      }
+      return;
+    }
+    const seg = e.target.closest('.seg-btn');
+    if (seg) {
+      document.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b === seg));
+      $('#view-rec').hidden = seg.dataset.view !== 'rec';
+      $('#view-pattern').hidden = seg.dataset.view !== 'pattern';
+      if (seg.dataset.view === 'pattern') renderChart();
+      return;
+    }
     const sb = e.target.closest('[data-solid]');
     if (sb) {
       state.records.solids[Number(sb.dataset.idx)].status = sb.dataset.solid;
@@ -349,13 +523,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 수유 기록 추가
+  // 수유 기록 추가 (시간 수정 가능, 비우면 지금)
   $('#feed-form').addEventListener('submit', e => {
     e.preventDefault();
     const type = $('#feed-type').value;
     const amt = Number($('#feed-amt').value) || 0;
-    state.records.feed.push({ d: isoDate(today()), t: nowTime(), type, amt });
-    saveState(state); $('#feed-amt').value = '';
+    const t = $('#feed-time').value || nowTime();
+    state.records.feed.push({ d: isoDate(today()), t, type, amt });
+    state.records.feed.sort((a, b) => dtOf(a) - dtOf(b));
+    saveState(state); $('#feed-amt').value = ''; $('#feed-time').value = '';
     renderRecord(); renderHome();
   });
 
