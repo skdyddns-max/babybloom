@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>베이비블룸 — 우리 아기 육아비서 달력</title>
+  <meta name="description" content="아기 생년월일만 입력하면 예방접종·원더윅스·영유아검진·언어발달 체크포인트가 자동으로 채워지는 육아비서 달력">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 온보딩 -->
+  <section id="onboarding" hidden>
+    <h2>🌷 베이비블룸</h2>
+    <p class="sub">아기 생일만 알려주세요.<br>접종·검진·원더윅스·발달 일정을 자동으로 채워드려요.</p>
+    <form id="onboard-form">
+      <label>아기 이름(태명)
+        <input type="text" id="in-name" placeholder="예: 도아" maxlength="10">
+      </label>
+      <label>생년월일 <span style="color:#E8975F">*</span>
+        <input type="date" id="in-birth" required>
+      </label>
+      <label>출산예정일 (선택)
+        <small>원더윅스는 예정일 기준이 더 정확해요. 모르면 비워두세요.</small>
+        <input type="date" id="in-due">
+      </label>
+      <label>로타바이러스 백신 종류
+        <small>접종한(할) 백신을 선택하세요. 병원에서 확인 가능해요.</small>
+        <select id="in-rota">
+          <option value="rotateq">로타텍 (3회 접종)</option>
+          <option value="rotarix">로타릭스 (2회 접종)</option>
+        </select>
+      </label>
+      <button type="submit">일정 자동으로 만들기 ✨</button>
+    </form>
+  </section>
+
+  <!-- 앱 본체 -->
+  <div id="app" hidden>
+    <header>
+      <h1><span class="logo">🌷 베이비블룸</span></h1>
+      <button id="btn-edit">아기 정보 수정</button>
+    </header>
+
+    <!-- 오늘 -->
+    <section class="panel" id="panel-home">
+      <div class="hero">
+        <div class="name"><span id="home-name"></span> 함께한 지</div>
+        <div class="dday" id="home-dday"></div>
+        <div class="sub" id="home-sub"></div>
+      </div>
+      <div id="home-cards"></div>
+    </section>
+
+    <!-- 일정 -->
+    <section class="panel" id="panel-schedule" hidden>
+      <div class="panel-head">
+        <h2>💉 접종 · 검진 일정</h2>
+        <p>다녀오면 체크하세요. 기간형 일정은 기간 안에 아무 때나 가능해요.</p>
+      </div>
+      <div id="schedule-list"></div>
+    </section>
+
+    <!-- 원더윅스 -->
+    <section class="panel" id="panel-leaps" hidden>
+      <div class="panel-head">
+        <h2>🌩️ 원더윅스 도약기</h2>
+        <p><span id="leaps-base"></span> · 시기는 ±1~2주 개인차가 있어요.</p>
+      </div>
+      <div id="leaps-list"></div>
+    </section>
+
+    <!-- 발달 -->
+    <section class="panel" id="panel-lang" hidden>
+      <div class="panel-head">
+        <h2>🗣️ 언어발달 체크포인트</h2>
+        <p>언어재활사 용디쌤 감수 · 우리 아기 시기에 해당하는 칸을 체크해보세요.</p>
+      </div>
+      <div id="lang-list"></div>
+    </section>
+
+    <!-- 기록 -->
+    <section class="panel" id="panel-record" hidden>
+      <div class="panel-head">
+        <h2>📔 오늘의 기록</h2>
+        <p>기록하면 비서가 비교·통계·관찰을 대신해드려요. (참고용, 진단이 아니에요)</p>
+      </div>
+
+      <div class="rec-block">
+        <h3>💩 배변 색 체크</h3>
+        <p class="rec-sub">오늘 기저귀 색을 눌러 기록하세요. 이전 기록과 자동으로 비교해드려요.</p>
+        <div id="poop-colors" class="swatches"></div>
+        <div id="poop-log"></div>
+      </div>
+
+      <div class="rec-block">
+        <h3>🍼 수유 기록</h3>
+        <form id="feed-form" class="inline-form">
+          <select id="feed-type">
+            <option value="분유">분유(ml)</option>
+            <option value="모유">모유(분)</option>
+            <option value="유축">유축(ml)</option>
+            <option value="이유식">이유식(g)</option>
+          </select>
+          <input type="number" id="feed-amt" min="0" max="1000" placeholder="양">
+          <button type="submit">＋ 기록</button>
+        </form>
+        <div id="feed-stats" class="stats-box"></div>
+        <div id="feed-log"></div>
+      </div>
+
+      <div class="rec-block">
+        <h3>🥣 이유식 · 알레르기 관찰</h3>
+        <div id="solid-stage"></div>
+        <form id="solid-form" class="inline-form">
+          <input type="text" id="solid-name" placeholder="새로 시도한 재료 (예: 당근)" maxlength="15">
+          <button type="submit">＋ 3일 관찰 시작</button>
+        </form>
+        <div id="solid-log"></div>
+        <details class="allergy-info">
+          <summary>⚠️ 알레르기 꼭 알아두기</summary>
+          <ul id="allergy-list"></ul>
+        </details>
+      </div>
+    </section>
+
+    <p class="disclaimer">본 일정은 질병관리청 표준예방접종일정표·국민건강보험공단 영유아검진 기준 참고용입니다.<br>실제 접종·검진은 소아청소년과 의사와 상담하세요.</p>
+
+    <nav>
+      <button class="tab active" data-tab="home"><span class="ico">🏠</span>오늘</button>
+      <button class="tab" data-tab="schedule"><span class="ico">💉</span>일정</button>
+      <button class="tab" data-tab="leaps"><span class="ico">🌩️</span>원더윅스</button>
+      <button class="tab" data-tab="lang"><span class="ico">🗣️</span>발달·놀이</button>
+      <button class="tab" data-tab="record"><span class="ico">📔</span>기록</button>
+    </nav>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
