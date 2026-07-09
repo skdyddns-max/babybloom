@@ -95,6 +95,30 @@ function currentLangStage() {
   const m = ageMonths();
   return LANG_MILESTONES.find(s => m >= s.startM && m <= s.endM) || null;
 }
+// 다가오는 기념일 (50·100·200·300일, 돌)
+function nextAnniversary() {
+  const b = birth();
+  const list = [[50, '50일'], [100, '100일'], [200, '200일'], [300, '300일']]
+    .map(([n, name]) => ({ date: addDays(b, n - 1), name }));
+  for (let y = 1; y <= 3; y++) {
+    list.push({ date: new Date(b.getFullYear() + y, b.getMonth(), b.getDate()), name: y === 1 ? '첫돌' : `${y}번째 생일` });
+  }
+  return list.filter(a => a.date >= today()).sort((a, b2) => a.date - b2.date)[0] || null;
+}
+// 특정 날짜의 총 수면(분) — 세션을 그날 경계로 잘라 합산
+function daySleepMinutes(dISO) {
+  let total = 0;
+  const dayStart = parseDate(dISO), dayEnd = addDays(dayStart, 1);
+  for (const s of sleepSessions()) {
+    const start = dtOf(s.start);
+    const end = s.end ? dtOf(s.end) : new Date();
+    const a = start > dayStart ? start : dayStart;
+    const b = end < dayEnd ? end : dayEnd;
+    if (b > a) total += (b - a) / 60000;
+  }
+  return Math.round(total);
+}
+function fmtMins(m) { const h = Math.floor(m / 60); return h ? `${h}시간 ${m % 60 ? `${m % 60}분` : ''}`.trim() : `${m}분`; }
 
 // ---------- 렌더 ----------
 const $ = sel => document.querySelector(sel);
@@ -121,6 +145,16 @@ function renderHome() {
   $('#home-sub').innerHTML = subChips.map(c => `<span>${c}</span>`).join('');
 
   const cards = [];
+  // 0) 다가오는 기념일 (30일 이내)
+  const anni = nextAnniversary();
+  if (anni) {
+    const dd = daysBetween(today(), anni.date);
+    if (dd === 0) {
+      cards.push(card('🎂', `오늘은 ${state.name || '아기'} ${anni.name}이에요!`, '축하해요! 🎉 오늘의 순간을 사진과 메모로 남겨보세요.', '', '#E64980'));
+    } else if (dd <= 30) {
+      cards.push(card('🎉', `${anni.name}까지 D-${dd}`, `${fmt(anni.date)} — 미리 준비하면 여유로워요.`, '', '#E64980'));
+    }
+  }
   // 1) 원더윅스
   const leap = currentLeap(), next = nextLeap();
   if (leap) {
@@ -330,6 +364,8 @@ function renderDayLog() {
     const poopN = state.records.poop.filter(p => p.d === d).length;
     const peeN = state.records.pee.filter(p => p.d === d).length;
     if (poopN || peeN) totals.push(`기저귀 ${poopN + peeN}회`);
+    const sm = daySleepMinutes(d);
+    if (sm > 0) totals.push(`수면 ${fmtMins(sm)}`);
     const dt = parseDate(d);
     const dayName = ['일', '월', '화', '수', '목', '금', '토'][dt.getDay()];
     const isToday = d === isoDate(today());
