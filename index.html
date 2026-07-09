@@ -127,17 +127,7 @@
 
       <div class="rec-block">
         <h3>🍼 수유 기록</h3>
-        <form id="feed-form" class="inline-form">
-          <select id="feed-type">
-            <option value="분유">분유(ml)</option>
-            <option value="모유">모유(분)</option>
-            <option value="유축">유축(ml)</option>
-            <option value="이유식">이유식(g)</option>
-          </select>
-          <input type="number" id="feed-amt" min="0" max="1000" placeholder="양">
-          <input type="time" id="feed-time" title="시간 (비우면 지금)">
-          <button type="submit">＋</button>
-        </form>
+        <p class="rec-sub">위의 모유·분유·유축·이유식 버튼을 누르면 기록창이 열려요.</p>
         <div id="feed-stats" class="stats-box"></div>
       </div>
 
@@ -191,6 +181,32 @@
       <button class="tab" data-tab="leaps"><span class="ico">🌩️</span>원더윅스</button>
       <button class="tab" data-tab="schedule"><span class="ico">💉</span>일정</button>
     </nav>
+  </div>
+
+  <!-- 수유 기록 바텀시트 -->
+  <div id="sheet-back" class="sheet-back" hidden>
+    <div class="sheet">
+      <div class="sheet-head">
+        <b id="sheet-title">🍼 분유</b>
+        <button type="button" id="sheet-close">✕</button>
+      </div>
+      <div class="sheet-sec">
+        <div class="sheet-label">시간 <input type="time" id="sheet-time-in" title="직접 입력"></div>
+        <div class="sheet-big" id="sheet-time">--:--</div>
+        <input type="range" id="time-slider" min="-240" max="60" step="5" value="0">
+        <div class="sheet-hint"><span>-4시간</span><span>지금</span><span>+1시간</span></div>
+      </div>
+      <div class="sheet-sec">
+        <div class="sheet-label">양</div>
+        <div class="amt-row">
+          <button type="button" class="amt-btn" data-amt="-10">−10</button>
+          <div class="sheet-big"><span id="sheet-amt">120</span><small id="sheet-unit">ml</small></div>
+          <button type="button" class="amt-btn" data-amt="10">＋10</button>
+        </div>
+        <input type="range" id="amt-slider" min="0" max="400" step="5" value="120">
+      </div>
+      <button type="button" id="sheet-save" class="sheet-save">저장 ✓</button>
+    </div>
   </div>
 
   <script src="js/config.js"></script>

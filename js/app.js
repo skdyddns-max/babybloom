@@ -455,6 +455,62 @@ function renderRecord() {
   $('#allergy-list').innerHTML = ALLERGY_NOTES.map(n => `<li>${n}</li>`).join('');
 }
 
+// ---------- 수유 기록 바텀시트 ----------
+const FEED_CFG = {
+  '분유': { unit: 'ml', max: 400, step: 5, def: 120 },
+  '유축': { unit: 'ml', max: 400, step: 5, def: 100 },
+  '모유': { unit: '분', max: 60, step: 1, def: 15 },
+  '이유식': { unit: 'g', max: 300, step: 5, def: 60 },
+};
+let sheetType = '분유';
+
+function openFeedSheet(type) {
+  sheetType = type;
+  const cfg = FEED_CFG[type];
+  $('#sheet-title').textContent = `${CATS[type].e} ${type}`;
+  const amtSlider = $('#amt-slider');
+  amtSlider.max = cfg.max; amtSlider.step = cfg.step;
+  const last = (state.lastAmt && state.lastAmt[type]) || cfg.def;
+  updateSheetAmt(last);
+  $('#sheet-unit').textContent = cfg.unit;
+  $('#time-slider').value = 0;
+  $('#sheet-time-in').value = '';
+  updateSheetTime();
+  $('#sheet-back').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeFeedSheet() { $('#sheet-back').hidden = true; document.body.style.overflow = ''; }
+
+function sheetDateTime() {
+  const manual = $('#sheet-time-in').value;
+  if (manual) { const dt = new Date(); const [h, m] = manual.split(':').map(Number); dt.setHours(h, m, 0, 0); return dt; }
+  return new Date(Date.now() + Number($('#time-slider').value) * 60000);
+}
+function updateSheetTime() {
+  const dt = sheetDateTime();
+  const off = Number($('#time-slider').value);
+  const rel = $('#sheet-time-in').value ? '직접 입력'
+    : off === 0 ? '지금' : off > 0 ? `+${off}분` : `${Math.abs(off) >= 60 ? `-${Math.floor(Math.abs(off) / 60)}시간 ${Math.abs(off) % 60 ? Math.abs(off) % 60 + '분' : ''}` : off + '분'}`;
+  $('#sheet-time').innerHTML = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')} <small>${rel.trim()}</small>`;
+}
+function updateSheetAmt(v) {
+  const cfg = FEED_CFG[sheetType];
+  v = Math.min(cfg.max, Math.max(0, v));
+  $('#sheet-amt').textContent = v;
+  $('#amt-slider').value = v;
+}
+function saveFeedSheet() {
+  const dt = sheetDateTime();
+  const amt = Number($('#sheet-amt').textContent) || 0;
+  state.lastAmt = state.lastAmt || {};
+  state.lastAmt[sheetType] = amt;
+  state.records.feed.push({ d: isoDate(dt), t: `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`, type: sheetType, amt });
+  state.records.feed.sort((a, b) => dtOf(a) - dtOf(b));
+  saveState(state);
+  closeFeedSheet();
+  renderRecord(); renderHome();
+}
+
 // ---------- 캘린더(.ics) 내보내기 ----------
 function icsDate(d) { return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`; }
 function icsEscape(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,'); }
@@ -534,9 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (qk) {
       const q = qk.dataset.quick;
       if (q === 'feed') {
-        $('#feed-type').value = qk.dataset.type;
-        document.querySelector('#feed-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        $('#feed-amt').focus();
+        openFeedSheet(qk.dataset.type);
       } else if (q === 'pee') {
         state.records.pee.push({ d: isoDate(today()), t: nowTime() });
         saveState(state); renderRecord();
@@ -569,17 +623,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 수유 기록 추가 (시간 수정 가능, 비우면 지금)
-  $('#feed-form').addEventListener('submit', e => {
-    e.preventDefault();
-    const type = $('#feed-type').value;
-    const amt = Number($('#feed-amt').value) || 0;
-    const t = $('#feed-time').value || nowTime();
-    state.records.feed.push({ d: isoDate(today()), t, type, amt });
-    state.records.feed.sort((a, b) => dtOf(a) - dtOf(b));
-    saveState(state); $('#feed-amt').value = ''; $('#feed-time').value = '';
-    renderRecord(); renderHome();
-  });
+  // 수유 기록 바텀시트
+  $('#sheet-close').addEventListener('click', closeFeedSheet);
+  $('#sheet-back').addEventListener('click', e => { if (e.target.id === 'sheet-back') closeFeedSheet(); });
+  $('#time-slider').addEventListener('input', () => { $('#sheet-time-in').value = ''; updateSheetTime(); });
+  $('#sheet-time-in').addEventListener('change', updateSheetTime);
+  $('#amt-slider').addEventListener('input', () => updateSheetAmt(Number($('#amt-slider').value)));
+  document.querySelectorAll('.amt-btn').forEach(b => b.addEventListener('click', () =>
+    updateSheetAmt(Number($('#sheet-amt').textContent) + Number(b.dataset.amt))));
+  $('#sheet-save').addEventListener('click', saveFeedSheet);
 
   // 새 이유식 재료 등록
   $('#solid-form').addEventListener('submit', e => {
