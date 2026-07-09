@@ -284,14 +284,14 @@ function sleepSessions() {
 // 모든 기록을 통합 이벤트로 (일별 로그·차트용)
 function allRecordEvents() {
   const r = state.records, out = [];
-  r.feed.forEach((f, i) => out.push({ kind: f.type, d: f.d, t: f.t, coll: 'feed', idx: i,
+  r.feed.forEach((f, i) => out.push({ kind: f.type, d: f.d, t: f.t, coll: 'feed', idx: i, tags: f.tags, memo: f.memo,
     text: `${f.type}${f.amt ? ` ${f.amt}${f.type === '모유' ? '분' : f.type === '이유식' ? 'g' : 'ml'}` : ''}` }));
-  r.pee.forEach((p, i) => out.push({ kind: '소변', d: p.d, t: p.t, coll: 'pee', idx: i, text: '소변' }));
+  r.pee.forEach((p, i) => out.push({ kind: '소변', d: p.d, t: p.t, coll: 'pee', idx: i, tags: p.tags, memo: p.memo, text: '소변' }));
   r.poop.forEach((p, i) => {
     const c = POOP_COLORS.find(x => x.id === p.color);
-    out.push({ kind: '대변', d: p.d, t: p.t, coll: 'poop', idx: i, text: `대변 · ${c ? c.name : ''}`, level: c && c.level });
+    out.push({ kind: '대변', d: p.d, t: p.t, coll: 'poop', idx: i, tags: p.tags, memo: p.memo, text: `대변 · ${c ? c.name : ''}`, level: c && c.level });
   });
-  r.sleep.forEach((s, i) => out.push({ kind: '수면', d: s.d, t: s.t, coll: 'sleep', idx: i, text: s.ev === 'sleep' ? '잠듦' : '기상' }));
+  r.sleep.forEach((s, i) => out.push({ kind: '수면', d: s.d, t: s.t, coll: 'sleep', idx: i, tags: s.tags, memo: s.memo, text: s.ev === 'sleep' ? '잠듦' : '기상' }));
   return out;
 }
 
@@ -338,7 +338,7 @@ function renderDayLog() {
       ${evs.map(e => `<div class="evt ${e.level === 'danger' ? 'danger' : ''}">
         <span class="evt-ico" style="background:${CATS[e.kind].c}1F; border-color:${CATS[e.kind].c}55">${CATS[e.kind].e}</span>
         <span class="evt-time">${e.t || ''}</span>
-        <span class="evt-text">${e.text}</span>
+        <span class="evt-text">${e.text}${e.tags || e.memo ? `<small class="evt-extra">${e.tags ? '💊 ' + e.tags.join(' · ') : ''}${e.tags && e.memo ? ' — ' : ''}${e.memo || ''}</small>` : ''}</span>
         <button type="button" class="rec-del" data-del="${e.coll}" data-idx="${e.idx}">✕</button>
       </div>`).join('')}
     </div>`;
@@ -467,6 +467,15 @@ let sheetMode = 'feed';          // 'feed' | 'diaper' | 'sleep'
 let sheetKind = 'pee';           // diaper: 'pee' | 'poop'
 let sheetColor = 'yellow';       // diaper 대변 색
 let sheetSleepEv = 'sleep';      // sleep: 'sleep' | 'wake'
+const DEFAULT_TAGS = ['유산균', '비타민D', '철분'];
+let sheetTags = new Set();
+
+function renderSheetTags() {
+  const all = [...DEFAULT_TAGS, ...(state.customTags || [])];
+  $('#sheet-tags').innerHTML = all.map(t =>
+    `<button type="button" class="tag ${sheetTags.has(t) ? 'sel' : ''}" data-tag="${t}">💊 ${t}</button>`).join('') +
+    '<button type="button" class="tag tag-add" data-tag-add>＋</button>';
+}
 
 function openSheetCommon(mode, title) {
   sheetMode = mode;
@@ -477,6 +486,9 @@ function openSheetCommon(mode, title) {
   $('#time-slider').value = 0;
   $('#sheet-time-in').value = '';
   updateSheetTime();
+  sheetTags = new Set();
+  $('#sheet-memo').value = '';
+  renderSheetTags();
   $('#sheet-back').hidden = false;
   document.body.style.overflow = 'hidden';
 }
@@ -542,22 +554,26 @@ function saveFeedSheet() {
   const dt = sheetDateTime();
   const d = isoDate(dt);
   const t = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+  const extra = {};
+  if (sheetTags.size) extra.tags = [...sheetTags];
+  const memo = $('#sheet-memo').value.trim();
+  if (memo) extra.memo = memo;
   if (sheetMode === 'feed') {
     const amt = Number($('#sheet-amt').textContent) || 0;
     state.lastAmt = state.lastAmt || {};
     state.lastAmt[sheetType] = amt;
-    state.records.feed.push({ d, t, type: sheetType, amt });
+    state.records.feed.push({ d, t, type: sheetType, amt, ...extra });
     state.records.feed.sort((a, b) => dtOf(a) - dtOf(b));
   } else if (sheetMode === 'diaper') {
     if (sheetKind === 'poop') {
-      state.records.poop.push({ d, t, color: sheetColor });
+      state.records.poop.push({ d, t, color: sheetColor, ...extra });
       state.records.poop.sort((a, b) => dtOf(a) - dtOf(b));
     } else {
-      state.records.pee.push({ d, t });
+      state.records.pee.push({ d, t, ...extra });
       state.records.pee.sort((a, b) => dtOf(a) - dtOf(b));
     }
   } else if (sheetMode === 'sleep') {
-    state.records.sleep.push({ d, t, ev: sheetSleepEv });
+    state.records.sleep.push({ d, t, ev: sheetSleepEv, ...extra });
     state.records.sleep.sort((a, b) => dtOf(a) - dtOf(b));
   }
   saveState(state);
@@ -690,6 +706,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sw) return;
     sheetColor = sw.dataset.sheetcolor;
     document.querySelectorAll('[data-sheetcolor]').forEach(x => x.classList.toggle('sel', x === sw));
+  });
+  // 영양제 태그 토글 · 커스텀 태그 추가
+  $('#sheet-tags').addEventListener('click', e => {
+    if (e.target.closest('[data-tag-add]')) {
+      const name = (prompt('추가할 영양제·태그 이름 (예: 비타민C)') || '').trim();
+      if (!name) return;
+      state.customTags = state.customTags || [];
+      if (!DEFAULT_TAGS.includes(name) && !state.customTags.includes(name)) state.customTags.push(name);
+      sheetTags.add(name);
+      saveState(state); renderSheetTags();
+      return;
+    }
+    const tag = e.target.closest('[data-tag]');
+    if (!tag) return;
+    const t = tag.dataset.tag;
+    sheetTags.has(t) ? sheetTags.delete(t) : sheetTags.add(t);
+    renderSheetTags();
   });
 
   // 새 이유식 재료 등록
