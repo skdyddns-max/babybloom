@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>베이비블룸 카드뉴스</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Pretendard Variable', Pretendard, sans-serif; background: #333; }
+  .card {
+    width: 1080px; height: 1080px; position: relative; overflow: hidden;
+    background: linear-gradient(160deg, #FEF7ED 0%, #FBEEDF 60%, #F9E7CE 100%);
+    color: #362D24; padding: 84px 80px 130px; display: flex; flex-direction: column;
+  }
+  .card .no { position: absolute; top: 56px; right: 64px; font-size: 26px; font-weight: 800; color: #C9A276; }
+  .card .brand { position: absolute; bottom: 52px; left: 84px; font-size: 28px; font-weight: 800; color: #B98A55; }
+  .card .brand b { color: #E8590C; }
+  .tulip { position: absolute; right: -60px; bottom: -80px; font-size: 420px; opacity: 0.10; transform: rotate(-12deg); }
+  .kicker { font-size: 34px; font-weight: 800; color: #E8590C; margin-bottom: 26px; letter-spacing: -0.5px; }
+  h1 { font-size: 84px; font-weight: 800; line-height: 1.22; letter-spacing: -2.5px; word-break: keep-all; }
+  h1 .hl { color: #E8590C; }
+  h2 { font-size: 58px; font-weight: 800; line-height: 1.26; letter-spacing: -2px; word-break: keep-all; margin-bottom: 34px; }
+  h2 .hl { color: #E8590C; }
+  p.big { font-size: 36px; line-height: 1.5; font-weight: 500; word-break: keep-all; color: #4A3F30; }
+  p.big b { color: #362D24; }
+  .center { justify-content: center; }
+  .bubble { background: #fff; border-radius: 28px; padding: 28px 38px; font-size: 33px; line-height: 1.45; font-weight: 600; box-shadow: 0 10px 30px rgba(139,107,74,.12); margin-bottom: 20px; word-break: keep-all; position: relative; }
+  .bubble.k { background: #FEE500; color: #3A2929; border-radius: 32px 32px 32px 8px; }
+  .bubble.me { background: #E8590C; color: #fff; border-radius: 32px 32px 8px 32px; margin-left: 120px; }
+  .bubble small { display: block; font-size: 26px; opacity: .65; margin-top: 10px; font-weight: 700; }
+  ul.feat { list-style: none; display: flex; flex-direction: column; gap: 26px; }
+  ul.feat li { display: flex; align-items: flex-start; gap: 26px; font-size: 38px; font-weight: 600; line-height: 1.4; word-break: keep-all; }
+  ul.feat .ico { width: 84px; height: 84px; border-radius: 26px; background: #fff; box-shadow: 0 6px 18px rgba(139,107,74,.14); display: flex; align-items: center; justify-content: center; font-size: 44px; flex-shrink: 0; }
+  .phone { background: #fff; border-radius: 40px; box-shadow: 0 16px 44px rgba(139,107,74,.2); padding: 44px 48px; }
+  .qr-row { display: flex; align-items: center; gap: 40px; margin-top: 44px; }
+  .link-pill { background: #362D24; color: #fff; font-size: 38px; font-weight: 800; padding: 26px 42px; border-radius: 999px; letter-spacing: 0; }
+  .tag-line { font-size: 34px; font-weight: 700; color: #8A7455; margin-top: 22px; }
+  .red { background: #FCEFEC; border-radius: 26px; padding: 30px 36px; font-size: 36px; font-weight: 700; color: #B04A42; margin-top: 34px; word-break: keep-all; }
+</style>
+</head>
+<body>
+
+<!-- 1. 훅 -->
+<section class="card center" id="c1">
+  <div class="no">1/8</div>
+  <div class="kicker">언어재활사 용디쌤의 AI 실험실</div>
+  <h1>동생이 보낸<br>카톡 <span class="hl">한 줄</span> 때문에<br>육아 앱을<br><span class="hl">직접 만들었습니다</span></h1>
+  <p class="big" style="margin-top:48px">코딩은 AI가, 저는 말만 했습니다.<br>이틀, 비용 0원. 🌷</p>
+  <div class="tulip">🌷</div>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+<!-- 2. 문제 -->
+<section class="card" id="c2">
+  <div class="no">2/8</div>
+  <h2>조카 태어난 지 4개월,<br>동생의 하소연</h2>
+  <div class="bubble k">"육아 달력 예쁜 거 샀는데<br>결국 <b>내가 수기로 다 적거든?</b>"</div>
+  <div class="bubble k">"아기 출생일에 맞춰서 <b>예방접종이나 원더윅스</b>가 자동으로 체크되면 좋겠어"</div>
+  <div class="bubble k">"기록앱은 많은데 그냥 기록용..<br><b>약간 육아비서 같은 게 있음 좋겠어</b> ㅋㅋㅋ"</div>
+  <p class="big" style="margin-top:22px">시중 앱은 '기록'만 해주고, <b>앞으로 뭘 챙겨야 하는지</b>는 안 알려주니까요.</p>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+<!-- 3. 과정 1 -->
+<section class="card" id="c3">
+  <div class="no">3/8</div>
+  <h2>그래서 AI 비서 <span class="hl">클로드</span>에게<br>그 카톡을 그대로 보여줬습니다</h2>
+  <div class="bubble me">📸 (동생 카톡 캡처 첨부)<br>"이런 어플을 만들고 싶어"<small>— 제가 입력한 전부입니다</small></div>
+  <p class="big">30분 뒤, 클로드가 돌려준 것:</p>
+  <ul class="feat" style="margin-top:30px">
+    <li><span class="ico">📋</span>기획서 (타깃·기능·데이터 출처·로드맵)</li>
+    <li><span class="ico">📱</span>작동하는 앱 초안 + 화면 검증까지</li>
+  </ul>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+<!-- 4. 과정 2 -->
+<section class="card" id="c4">
+  <div class="no">4/8</div>
+  <h2>그 뒤로는 그냥<br><span class="hl">말만 했습니다</span></h2>
+  <div class="bubble me">"질병관리청 2026 접종표랑 1:1로 대조해줘"</div>
+  <div class="bubble me">"동생이 쓰던 앱처럼 슬라이더로 기록하게 해줘"</div>
+  <div class="bubble me">"글씨가 잘 안 보인대. 시인성 높여줘"</div>
+  <p class="big" style="margin-top:28px">말할 때마다 클로드가 그 자리에서<br>고치고 → 검증하고 → <b>배포</b>했습니다.<br>제가 쓴 코드: <b>0줄</b></p>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+<!-- 5. 결과 -->
+<section class="card" id="c5">
+  <div class="no">5/8</div>
+  <div class="kicker">그렇게 태어난 앱</div>
+  <h2>🌷 베이비블룸<br><span class="hl">생년월일 하나</span>면 끝나는<br>육아비서 달력</h2>
+  <ul class="feat">
+    <li><span class="ico">💉</span>예방접종 46건 — 날짜로 자동 변환</li>
+    <li><span class="ico">🩺</span>영유아검진 8차 + 구강검진 자동</li>
+    <li><span class="ico">🌩️</span>원더윅스 10단계 — 시기·대처법</li>
+    <li><span class="ico">📅</span>아이폰 캘린더로 내보내면 알림까지</li>
+  </ul>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+<!-- 6. 기능 -->
+<section class="card" id="c6">
+  <div class="no">6/8</div>
+  <h2>기록은 <span class="hl">탭 한 번</span>,<br>타이핑 없이</h2>
+  <ul class="feat">
+    <li><span class="ico">🍼</span>수유·기저귀·수면 — 슬라이더로 3초 기록</li>
+    <li><span class="ico">💩</span>배변 색 체크 — 지난번과 자동 비교, 위험색 경고</li>
+    <li><span class="ico">📊</span>주간 패턴 차트 + 하루 통계 자동</li>
+    <li><span class="ico">👨‍👩‍👧</span>가족 코드로 남편이랑 같이 기록</li>
+  </ul>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+<!-- 7. 시그니처 -->
+<section class="card" id="c7">
+  <div class="no">7/8</div>
+  <div class="kicker">다른 앱엔 없는 것</div>
+  <h2><span class="hl">언어재활사 17년</span>이 감수한<br>발달·놀이 가이드</h2>
+  <ul class="feat">
+    <li><span class="ico">🗣️</span>개월별 언어발달 체크리스트</li>
+    <li><span class="ico">🧸</span>시기별 놀이법 + "아직 사지 마세요" 장난감 가이드</li>
+  </ul>
+  <div class="red">🚨 12개월인데 포인팅이 없다?<br>18개월인데 첫 낱말이 없다?<br>— 이런 '빨간불 신호'까지 알려드려요.</div>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+<!-- 8. CTA -->
+<section class="card center" id="c8">
+  <div class="no">8/8</div>
+  <h1>무료입니다.<br>광고도 없습니다.<br><span class="hl">지금 써보세요</span></h1>
+  <div class="qr-row"><div class="link-pill">skdyddns-max.github.io/babybloom</div></div>
+  <p class="big" style="margin-top:40px">사파리에서 열고 <b>공유 → 홈 화면에 추가</b>하면<br>진짜 앱처럼 설치돼요. 📲</p>
+  <p class="tag-line">AI로 만든 과정이 궁금하다면 → 용디쌤 팔로우 🌷<br>#육아앱 #베이비블룸 #AI활용 #클로드</p>
+  <div class="tulip">🌷</div>
+  <div class="brand">용디쌤 × <b>Claude</b></div>
+</section>
+
+</body>
+</html>
