@@ -463,22 +463,61 @@ const FEED_CFG = {
   '이유식': { unit: 'g', max: 300, step: 5, def: 60 },
 };
 let sheetType = '분유';
+let sheetMode = 'feed';          // 'feed' | 'diaper' | 'sleep'
+let sheetKind = 'pee';           // diaper: 'pee' | 'poop'
+let sheetColor = 'yellow';       // diaper 대변 색
+let sheetSleepEv = 'sleep';      // sleep: 'sleep' | 'wake'
 
-function openFeedSheet(type) {
-  sheetType = type;
-  const cfg = FEED_CFG[type];
-  $('#sheet-title').textContent = `${CATS[type].e} ${type}`;
-  const amtSlider = $('#amt-slider');
-  amtSlider.max = cfg.max; amtSlider.step = cfg.step;
-  const last = (state.lastAmt && state.lastAmt[type]) || cfg.def;
-  updateSheetAmt(last);
-  $('#sheet-unit').textContent = cfg.unit;
+function openSheetCommon(mode, title) {
+  sheetMode = mode;
+  $('#sheet-title').textContent = title;
+  $('#sheet-feed-sec').hidden = mode !== 'feed';
+  $('#sheet-diaper-sec').hidden = mode !== 'diaper';
+  $('#sheet-sleep-sec').hidden = mode !== 'sleep';
   $('#time-slider').value = 0;
   $('#sheet-time-in').value = '';
   updateSheetTime();
   $('#sheet-back').hidden = false;
   document.body.style.overflow = 'hidden';
 }
+
+function openFeedSheet(type) {
+  sheetType = type;
+  const cfg = FEED_CFG[type];
+  const amtSlider = $('#amt-slider');
+  amtSlider.max = cfg.max; amtSlider.step = cfg.step;
+  $('#sheet-unit').textContent = cfg.unit;
+  openSheetCommon('feed', `${CATS[type].e} ${type}`);
+  updateSheetAmt((state.lastAmt && state.lastAmt[type]) || cfg.def);
+}
+
+function openDiaperSheet(kind) {
+  openSheetCommon('diaper', '💧💩 기저귀');
+  setSheetKind(kind);
+}
+function setSheetKind(kind) {
+  sheetKind = kind;
+  document.querySelectorAll('[data-kind]').forEach(b => b.classList.toggle('active', b.dataset.kind === kind));
+  const colors = $('#sheet-colors');
+  colors.hidden = kind !== 'poop';
+  if (kind === 'poop') {
+    const lastPoop = state.records.poop[state.records.poop.length - 1];
+    sheetColor = (lastPoop && lastPoop.color) || 'yellow';
+    colors.innerHTML = POOP_COLORS.map(c =>
+      `<button type="button" class="swatch ${c.id === sheetColor ? 'sel' : ''}" data-sheetcolor="${c.id}">
+        <span class="dot" style="background:${c.hex}"></span>${c.name.split('(')[0]}</button>`).join('');
+  }
+}
+
+function openSleepSheet() {
+  openSheetCommon('sleep', '😴 수면');
+  setSheetSleep(sleepState().asleep ? 'wake' : 'sleep');
+}
+function setSheetSleep(ev) {
+  sheetSleepEv = ev;
+  document.querySelectorAll('[data-sleep]').forEach(b => b.classList.toggle('active', b.dataset.sleep === ev));
+}
+
 function closeFeedSheet() { $('#sheet-back').hidden = true; document.body.style.overflow = ''; }
 
 function sheetDateTime() {
@@ -501,11 +540,26 @@ function updateSheetAmt(v) {
 }
 function saveFeedSheet() {
   const dt = sheetDateTime();
-  const amt = Number($('#sheet-amt').textContent) || 0;
-  state.lastAmt = state.lastAmt || {};
-  state.lastAmt[sheetType] = amt;
-  state.records.feed.push({ d: isoDate(dt), t: `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`, type: sheetType, amt });
-  state.records.feed.sort((a, b) => dtOf(a) - dtOf(b));
+  const d = isoDate(dt);
+  const t = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+  if (sheetMode === 'feed') {
+    const amt = Number($('#sheet-amt').textContent) || 0;
+    state.lastAmt = state.lastAmt || {};
+    state.lastAmt[sheetType] = amt;
+    state.records.feed.push({ d, t, type: sheetType, amt });
+    state.records.feed.sort((a, b) => dtOf(a) - dtOf(b));
+  } else if (sheetMode === 'diaper') {
+    if (sheetKind === 'poop') {
+      state.records.poop.push({ d, t, color: sheetColor });
+      state.records.poop.sort((a, b) => dtOf(a) - dtOf(b));
+    } else {
+      state.records.pee.push({ d, t });
+      state.records.pee.sort((a, b) => dtOf(a) - dtOf(b));
+    }
+  } else if (sheetMode === 'sleep') {
+    state.records.sleep.push({ d, t, ev: sheetSleepEv });
+    state.records.sleep.sort((a, b) => dtOf(a) - dtOf(b));
+  }
   saveState(state);
   closeFeedSheet();
   renderRecord(); renderHome();
@@ -592,14 +646,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (q === 'feed') {
         openFeedSheet(qk.dataset.type);
       } else if (q === 'pee') {
-        state.records.pee.push({ d: isoDate(today()), t: nowTime() });
-        saveState(state); renderRecord();
+        openDiaperSheet('pee');
       } else if (q === 'poop') {
-        document.querySelector('#poop-colors').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        openDiaperSheet('poop');
       } else if (q === 'sleep') {
-        const ev = sleepState().asleep ? 'wake' : 'sleep';
-        state.records.sleep.push({ d: isoDate(today()), t: nowTime(), ev });
-        saveState(state); renderRecord();
+        openSleepSheet();
       }
       return;
     }
@@ -632,6 +683,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.amt-btn').forEach(b => b.addEventListener('click', () =>
     updateSheetAmt(Number($('#sheet-amt').textContent) + Number(b.dataset.amt))));
   $('#sheet-save').addEventListener('click', saveFeedSheet);
+  document.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => setSheetKind(b.dataset.kind)));
+  document.querySelectorAll('[data-sleep]').forEach(b => b.addEventListener('click', () => setSheetSleep(b.dataset.sleep)));
+  $('#sheet-colors').addEventListener('click', e => {
+    const sw = e.target.closest('[data-sheetcolor]');
+    if (!sw) return;
+    sheetColor = sw.dataset.sheetcolor;
+    document.querySelectorAll('[data-sheetcolor]').forEach(x => x.classList.toggle('sel', x === sw));
+  });
 
   // 새 이유식 재료 등록
   $('#solid-form').addEventListener('submit', e => {

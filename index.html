@@ -196,7 +196,7 @@
         <input type="range" id="time-slider" min="-240" max="60" step="5" value="0">
         <div class="sheet-hint"><span>-4시간</span><span>지금</span><span>+1시간</span></div>
       </div>
-      <div class="sheet-sec">
+      <div class="sheet-sec" id="sheet-feed-sec">
         <div class="sheet-label">양</div>
         <div class="amt-row">
           <button type="button" class="amt-btn" data-amt="-10">−10</button>
@@ -204,6 +204,21 @@
           <button type="button" class="amt-btn" data-amt="10">＋10</button>
         </div>
         <input type="range" id="amt-slider" min="0" max="400" step="5" value="120">
+      </div>
+      <div class="sheet-sec" id="sheet-diaper-sec" hidden>
+        <div class="sheet-label">종류</div>
+        <div class="kind-row">
+          <button type="button" class="kind-btn" data-kind="pee">💧 소변</button>
+          <button type="button" class="kind-btn" data-kind="poop">💩 대변</button>
+        </div>
+        <div id="sheet-colors" class="swatches" hidden></div>
+      </div>
+      <div class="sheet-sec" id="sheet-sleep-sec" hidden>
+        <div class="sheet-label">종류</div>
+        <div class="kind-row">
+          <button type="button" class="kind-btn" data-sleep="sleep">😴 잠듦</button>
+          <button type="button" class="kind-btn" data-sleep="wake">🌞 기상</button>
+        </div>
       </div>
       <button type="button" id="sheet-save" class="sheet-save">저장 ✓</button>
     </div>

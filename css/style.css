@@ -263,6 +263,10 @@ header h1 .logo { color: var(--peach-deep); }
 .sheet input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 3px solid var(--peach-deep); margin-top: -10px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 .sheet input[type="range"]::-moz-range-track { height: 10px; border-radius: 5px; background: linear-gradient(90deg, #F8CFA2, #F5A96B); }
 .sheet input[type="range"]::-moz-range-thumb { width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 3px solid var(--peach-deep); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.kind-row { display: flex; gap: 9px; margin: 6px 0 10px; }
+.kind-btn { flex: 1; border: 2px solid var(--line); background: #fff; border-radius: 14px; padding: 13px; font-size: 16px; font-weight: 800; font-family: inherit; color: var(--ink-soft); cursor: pointer; min-height: 54px; }
+.kind-btn.active { border-color: var(--peach-deep); background: #FDEBDD; color: var(--ink); }
+.swatch.sel { border-color: var(--peach-deep); background: #FDEBDD; box-shadow: 0 0 0 2px var(--peach-deep) inset; }
 .amt-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
 .amt-btn { border: none; background: #F6EBDA; color: var(--peach-deep); font-size: 16px; font-weight: 800; border-radius: 999px; padding: 10px 16px; min-height: 46px; cursor: pointer; font-family: inherit; flex-shrink: 0; }
 .amt-btn:active { transform: scale(0.94); }
