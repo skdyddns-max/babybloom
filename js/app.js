@@ -100,11 +100,17 @@ function schoolEntryDate() { return new Date(birth().getFullYear() + 7, 2, 2); }
 function schoolMilestones() {
   const y = birth().getFullYear() + 7;
   return [
-    { date: new Date(y - 1, 9, 1), name: '취학아동 명부 작성 시작', desc: '조기입학·입학연기 신청도 10~12월에 주민센터에서 해요' },
-    { date: new Date(y - 1, 11, 10), name: '취학통지서 확인', desc: '12월 20일까지 발부돼요 (정부24 온라인 발급 지역도)' },
-    { date: new Date(y, 0, 4), name: '예비소집 시즌', desc: '1월 초·학교마다 달라요. 취학통지서를 챙겨 참석하세요' },
-    { date: new Date(y, 2, 2), name: '초등학교 입학', desc: '드디어 학교에 가요! 🎒' },
+    { date: new Date(y - 1, 9, 1), name: '취학아동 명부 작성 시작', short: '명부작성', desc: '조기입학·입학연기 신청도 10~12월에 주민센터에서 해요' },
+    { date: new Date(y - 1, 11, 10), name: '취학통지서 확인', short: '통지서', desc: '12월 20일까지 발부돼요 (정부24 온라인 발급 지역도)' },
+    { date: new Date(y, 0, 4), name: '예비소집 시즌', short: '예비소집', desc: '1월 초·학교마다 달라요. 취학통지서를 챙겨 참석하세요' },
+    { date: new Date(y, 2, 2), name: '초등학교 입학', short: '입학', desc: '드디어 학교에 가요! 🎒' },
   ];
+}
+function schoolPrepProgress() {
+  const total = SCHOOL_PREP.reduce((a, c) => a + c.items.length, 0);
+  const done = SCHOOL_PREP.reduce((a, c, ci) =>
+    a + c.items.filter((_, i) => state.done[`school-${ci}-${i}`]).length, 0);
+  return { done, total };
 }
 // 취학 준비 노출 기간: 입학 전년도 1월 1일 ~ 입학 후 60일
 function schoolPrepVisible() {
@@ -227,11 +233,13 @@ function renderHome() {
     const ms = schoolMilestones().find(x => daysBetween(today(), x.date) >= 0);
     if (ms) {
       const dd = daysBetween(today(), ms.date);
+      const { done, total } = schoolPrepProgress();
+      const prog = `체크리스트 <b>${done}/${total}</b> 완료`;
       if (dd === 0) {
-        cards.push(card('🏫', `오늘은 ${ms.name}!`, `${ms.desc}
+        cards.push(card('🏫', `오늘은 ${ms.name}!`, `${ms.desc}<br>${prog}
           <br><a href="#" class="link" data-goto="lang">취학 준비 체크리스트 보기 →</a>`, '', '#1971C2'));
       } else if (dd <= 60) {
-        cards.push(card('🏫', `${ms.name}까지 D-${dd}`, `${fmt(ms.date)} — ${ms.desc}
+        cards.push(card('🏫', `${ms.name}까지 D-${dd}`, `${fmt(ms.date)} — ${ms.desc}<br>${prog}
           <br><a href="#" class="link" data-goto="lang">취학 준비 체크리스트 보기 →</a>`, '', '#1971C2'));
       }
     }
@@ -330,21 +338,49 @@ function renderLang() {
 function renderSchoolPrep() {
   if (!schoolPrepVisible()) return '';
   const entry = schoolEntryDate();
-  const total = SCHOOL_PREP.reduce((a, c) => a + c.items.length, 0);
-  const done = SCHOOL_PREP.reduce((a, c, ci) =>
-    a + c.items.filter((_, i) => state.done[`school-${ci}-${i}`]).length, 0);
+  const { done, total } = schoolPrepProgress();
+  const pct = Math.round(done / total * 100);
   const dd = daysBetween(today(), entry);
-  const dday = dd > 0 ? `입학까지 D-${dd}` : dd === 0 ? '오늘 입학! 🎉' : '입학을 축하해요! 🎉';
-  const cats = SCHOOL_PREP.map((c, ci) => `
-    <div class="school-cat">${c.cat}</div>
-    ${c.items.map((it, i) => {
-      const key = `school-${ci}-${i}`;
-      return `<label class="check-item"><input type="checkbox" data-id="${key}" ${state.done[key] ? 'checked' : ''}> ${it}</label>`;
-    }).join('')}`).join('');
+  const dday = dd > 0 ? `입학까지 D-${dd}` : dd === 0 ? '오늘 입학! 🎉' : '입학 완료 🎉';
+
+  // 행정 일정 타임라인 (지남 ✓ · 다음 강조)
+  const ms = schoolMilestones();
+  let nextIdx = ms.findIndex(x => daysBetween(today(), x.date) >= 0);
+  if (nextIdx === -1) nextIdx = ms.length;
+  const tl = ms.map((s, i) => {
+    const st = i < nextIdx ? 'done' : i === nextIdx ? 'next' : '';
+    const d = daysBetween(today(), s.date);
+    return `<div class="tl-step ${st}">
+      <div class="tl-dot">${st === 'done' ? '✓' : ''}</div>
+      <div class="tl-name">${s.short}</div>
+      <div class="tl-date">${st === 'next' && d > 0 ? `D-${d}` : fmtShort(s.date)}</div>
+    </div>`;
+  }).join('');
+  const nextMs = ms[nextIdx];
+
+  // 카테고리 아코디언: 첫 미완료 카테고리만 열어두기
+  let opened = false;
+  const cats = SCHOOL_PREP.map((c, ci) => {
+    const catDone = c.items.filter((_, i) => state.done[`school-${ci}-${i}`]).length;
+    const full = catDone === c.items.length;
+    const isOpen = !opened && !full ? (opened = true) : false;
+    return `<details class="school-acc" ${isOpen ? 'open' : ''}>
+      <summary><span class="acc-name">${c.cat}</span>
+        <span class="cat-count ${full ? 'full' : ''}" id="school-cat-${ci}">${full ? '✓ 완료' : `${catDone}/${c.items.length}`}</span></summary>
+      ${c.items.map((it, i) => {
+        const key = `school-${ci}-${i}`;
+        return `<label class="check-item"><input type="checkbox" data-id="${key}" ${state.done[key] ? 'checked' : ''}> <span>${it}</span></label>`;
+      }).join('')}
+    </details>`;
+  }).join('');
+
   return `
     <div class="lang-stage school current">
-      <div class="lang-title">🏫 취학 준비 체크리스트 <span class="badge b-open" id="school-count">${done}/${total}</span></div>
-      <div class="school-sub">${entry.getFullYear()}년 3월 입학 예정 · ${dday}</div>
+      <div class="lang-title">🏫 취학 준비 <span class="school-dday">${entry.getFullYear()}년 3월 입학 · ${dday}</span></div>
+      <div class="school-bar"><div class="school-fill" id="school-fill" style="width:${pct}%"></div></div>
+      <div class="school-progress"><span id="school-count">${done}</span>/${total} 완료 ${done === total ? '· 준비 끝, 멋져요! 🎒' : ''}</div>
+      <div class="school-tl">${tl}</div>
+      ${nextMs ? `<div class="school-next">📌 다음: <b>${nextMs.name}</b> — ${nextMs.desc}</div>` : ''}
       ${cats}
       <div class="tip">💡 ${SCHOOL_PREP_TIP}</div>
       <div class="motor">🗣️ 말·발음이 또래보다 늦는 것 같다면 입학 전에 전문 체크를 받아보는 게 좋아요 —
@@ -767,10 +803,18 @@ document.addEventListener('DOMContentLoaded', () => {
       saveState(state); renderHome(); renderSchedule();
       const sc = $('#school-count');
       if (sc && e.target.dataset.id.startsWith('school-')) {
-        const total = SCHOOL_PREP.reduce((a, c) => a + c.items.length, 0);
-        const done = SCHOOL_PREP.reduce((a, c, ci) =>
-          a + c.items.filter((_, i) => state.done[`school-${ci}-${i}`]).length, 0);
-        sc.textContent = `${done}/${total}`;
+        const { done, total } = schoolPrepProgress();
+        sc.textContent = done;
+        $('#school-fill').style.width = `${Math.round(done / total * 100)}%`;
+        const ci = Number(e.target.dataset.id.split('-')[1]);
+        const c = SCHOOL_PREP[ci];
+        const catDone = c.items.filter((_, i) => state.done[`school-${ci}-${i}`]).length;
+        const cc = $(`#school-cat-${ci}`);
+        if (cc) {
+          const full = catDone === c.items.length;
+          cc.textContent = full ? '✓ 완료' : `${catDone}/${c.items.length}`;
+          cc.classList.toggle('full', full);
+        }
       }
     }
   });
