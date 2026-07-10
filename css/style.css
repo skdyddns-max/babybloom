@@ -163,6 +163,9 @@ header h1 .logo { color: var(--peach-deep); }
 .lang-stage details li { margin-bottom: 4px; }
 .toy-line { font-size: 14px; margin-top: 5px; }
 .lang-stage.eco .eco-body { font-size: 14.5px; margin: 0 0 8px; }
+.lang-stage.school { border-color: #1971C2; background: linear-gradient(135deg, #EDF5FC 0%, #FDFDF8 70%); }
+.school-sub { font-size: 14px; color: var(--ink-soft); font-weight: 600; margin: -3px 0 4px; }
+.school-cat { font-weight: 800; font-size: 14.5px; margin: 12px 0 2px; }
 .toy-skip { font-size: 13.5px; color: #8F4F27; background: #FAF1E7; border-radius: 10px; padding: 9px 12px; margin-top: 8px; font-weight: 500; }
 
 /* ---- 기록 탭 ---- */
