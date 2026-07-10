@@ -174,3 +174,9 @@ const ALLERGY_NOTES = [
 
 // ---- 상수 ----
 const DISCLAIMER = '표준 일정 기준 참고용입니다. 실제 접종·검진 시기는 소아청소년과 의사와 상담하세요.';
+
+// ---- 블룸 생태계 연계 (영유아기 이후 핸드오프) ----
+const ECO_LINKS = {
+  talkbloom: 'https://www.talkbloom.org',
+  bloomcare: 'https://skdyddns-max.github.io/bloomcare/',
+};

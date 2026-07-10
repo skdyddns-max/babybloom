@@ -205,6 +205,20 @@ function renderHome() {
     cards.push(card('🗣️', lang.title, `${lang.items[0]}<br><span class="tip">💡 ${lang.parentTip}</span>
       <br><a href="#" class="link" data-goto="lang">발달 탭에서 체크하기 →</a>`, '', '#2B8A3E'));
   }
+  // 6) 블룸 생태계 연계 (영유아기 이후 핸드오프)
+  if (m > 36) {
+    cards.push(card('🎓', '베이비블룸 발달 이정표는 여기까지 함께했어요',
+      `이제 유아기! 말·언어 발달은 언어재활사가 만든 <b>톡블룸 발달체크</b>로 계속 지켜봐 주세요.
+      <br><a class="link" href="${ECO_LINKS.talkbloom}" target="_blank" rel="noopener">톡블룸에서 발달체크 하기 →</a>`, '', '#0B7285'));
+  } else if (m >= 30) {
+    cards.push(card('🌱', '언어발달, 한 번 점검해볼 시기예요',
+      `영유아검진에서도 언어 문항이 중요해지는 때예요. <b>톡블룸 발달체크</b>로 미리 확인해보세요.
+      <br><a class="link" href="${ECO_LINKS.talkbloom}" target="_blank" rel="noopener">톡블룸에서 발달체크 하기 →</a>`, '', '#0B7285'));
+  }
+  const bYm = birth();
+  cards.push(card('🎁', '우리 아이가 받을 수 있는 지원제도',
+    `출생연월 기준으로 정부·지자체 지원제도를 모아 보여드려요.
+    <br><a class="link" href="${ECO_LINKS.bloomcare}?y=${bYm.getFullYear()}&m=${bYm.getMonth() + 1}" target="_blank" rel="noopener">블룸케어에서 확인하기 →</a>`, '', '#5C940D'));
   $('#home-cards').innerHTML = cards.join('');
 }
 
@@ -272,7 +286,13 @@ function renderLang() {
         <div class="toy-skip">✋ ${s.toySkip}</div>
       </details>
     </div>`;
-  }).join('');
+  }).join('') + `
+    <div class="lang-stage eco ${m > 36 ? 'current' : ''}">
+      <div class="lang-title">🌱 36개월 이후에는?</div>
+      <p class="eco-body">베이비블룸의 발달 이정표는 36개월까지예요. 그 다음 단계의 말·언어 발달은
+        언어재활사가 만든 <b>톡블룸</b>에서 이어서 확인할 수 있어요.</p>
+      <a class="link" href="${ECO_LINKS.talkbloom}" target="_blank" rel="noopener">톡블룸 발달체크 하러 가기 →</a>
+    </div>`;
 }
 
 // ---------- 기록 탭 ----------
