@@ -133,17 +133,23 @@ def chunk_words(words):
     return chunks, idx2chunk
 
 
-def state_html(logo_uri, dots, cta_html, chunk_words_list, now_local):
+def chrome_html(logo_uri, dots, cta_html):
+    """컷 내내 고정 표시되는 요소: 스크림·브랜드·CTA·진행도트 (자막 제외)."""
+    brand = (f'<div class="brand"><img src="{logo_uri}"><span class="bn">용디쌤 🌷</span></div>'
+             if logo_uri else '<div class="brand"><span class="bn">용디쌤 🌷</span></div>')
+    return (f"<!doctype html><html lang=ko><head><meta charset=utf-8>{FONT}<style>{CAP_CSS}</style></head>"
+            f'<body><div class="scrim"></div>{brand}{cta_html}'
+            f'<div class="dots">{dots}</div></body></html>')
+
+
+def state_html(chunk_words_list, now_local):
+    """자막 텍스트만 (투명 배경) — 청크 전환 페이드가 자막에만 걸리게."""
     spans = []
     for j, wtext in enumerate(chunk_words_list):
         cls = "w now" if j == now_local else ("w said" if j < now_local else "w")
         spans.append(f'<span class="{cls}">{wtext}</span>')
-    brand = (f'<div class="brand"><img src="{logo_uri}"><span class="bn">용디쌤 🌷</span></div>'
-             if logo_uri else '<div class="brand"><span class="bn">용디쌤 🌷</span></div>')
     return (f"<!doctype html><html lang=ko><head><meta charset=utf-8>{FONT}<style>{CAP_CSS}</style></head>"
-            f'<body><div class="scrim"></div>{brand}'
-            f'<div class="cap">{"".join(spans)}</div>{cta_html}'
-            f'<div class="dots">{dots}</div></body></html>')
+            f'<body><div class="cap">{"".join(spans)}</div></body></html>')
 
 
 def main(run_dir, n_cuts=None):
@@ -189,21 +195,24 @@ def main(run_dir, n_cuts=None):
     total_all = len(c.get("shorts", []))
     tmp = os.path.join(run_dir, "pub_s", "_kar"); os.makedirs(tmp, exist_ok=True)  # TTS 캐시 유지 위해 삭제 안 함
 
-    # BGM (실패해도 무음)
+    # BGM (실패해도 무음) — 캐시 있으면 재사용
     bgm = os.path.join(tmp, "bgm.mp3")
-    try:
-        rb = subprocess.run(["curl", "-s", "-o", bgm, "-w", "%{http_code}", "-X", "POST",
-                             "https://api.elevenlabs.io/v1/sound-generation",
-                             "-H", f"xi-api-key: {KEY}", "-H", "Content-Type: application/json",
-                             "-d", json.dumps({"text": "soft warm gentle ambient background music, calm "
-                                               "hopeful piano and soft pads, tender parenting mood, no drums, "
-                                               "seamless", "duration_seconds": 22})],
-                            capture_output=True, text=True)
-        if rb.stdout.strip() != "200" or dur(bgm) < 1:
+    if os.path.exists(bgm) and dur(bgm) > 1:
+        print("  BGM: 캐시 재사용")
+    else:
+        try:
+            rb = subprocess.run(["curl", "-s", "-o", bgm, "-w", "%{http_code}", "-X", "POST",
+                                 "https://api.elevenlabs.io/v1/sound-generation",
+                                 "-H", f"xi-api-key: {KEY}", "-H", "Content-Type: application/json",
+                                 "-d", json.dumps({"text": "soft warm gentle ambient background music, calm "
+                                                   "hopeful piano and soft pads, tender parenting mood, no drums, "
+                                                   "seamless", "duration_seconds": 22})],
+                                capture_output=True, text=True)
+            if rb.stdout.strip() != "200" or dur(bgm) < 1:
+                bgm = None
+        except Exception:
             bgm = None
-    except Exception:
-        bgm = None
-    print("  BGM:", "생성됨" if bgm else "없음")
+        print("  BGM:", "생성됨" if bgm else "없음")
 
     v_clips, a_clips = [], []
     for i, cut in enumerate(shorts, 1):
@@ -225,18 +234,24 @@ def main(run_dir, n_cuts=None):
         dots = "".join(f'<span class="dot{" on" if j == i else ""}"></span>' for j in range(1, total_all + 1))
         cta_html = f'<div class="cta">{cut["cta"]}</div>' if cut.get("cta") else ""
 
-        # 자막: 문구(청크) 단위로 렌더 → ffmpeg 페이드로 부드럽게 등장(단어별 튐·크기변화 제거)
-        states = []   # (png, t_start, t_end)
-        for ci, ch in enumerate(chunks):
-            wl = [words[k]["w"] for k in ch]
-            html = state_html(logo_uri, dots, cta_html, wl, len(wl))  # 전부 균일 흰색
-            hp = os.path.join(tmp, f"s{i}_{ci}.html"); open(hp, "w", encoding="utf-8").write(html)
-            fp = os.path.join(tmp, f"s{i}_{ci}.png")
+        def shot(html, fp):
+            hp = fp + ".html"; open(hp, "w", encoding="utf-8").write(html)
             subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars",
                             "--default-background-color=00000000", f"--screenshot={fp}",
                             "--window-size=1080,1920", "--force-device-scale-factor=1",
                             "--virtual-time-budget=500", f"file://{hp}"], check=True, capture_output=True)
             os.remove(hp)
+
+        # 고정 크롬(스크림·브랜드·CTA·도트): 컷 내내 표시, 페이드 없음 → 깜빡임 제거
+        chrome_png = os.path.join(tmp, f"chrome{i}.png")
+        shot(chrome_html(logo_uri, dots, cta_html), chrome_png)
+
+        # 자막: 문구(청크) 단위로 렌더 → 자막 텍스트에만 페이드
+        states = []   # (png, t_start, t_end)
+        for ci, ch in enumerate(chunks):
+            wl = [words[k]["w"] for k in ch]
+            fp = os.path.join(tmp, f"s{i}_{ci}.png")
+            shot(state_html(wl, len(wl)), fp)  # 전부 균일 색
             cs = LEAD + words[ch[0]]["t"]
             ce = (LEAD + words[chunks[ci + 1][0]]["t"]) if ci + 1 < len(chunks) else cut_dur
             states.append((fp, round(cs, 3), round(ce, 3)))
@@ -253,16 +268,17 @@ def main(run_dir, n_cuts=None):
         pA = f"(1-pow(1-on/{NA},2))"; pB = f"(1-pow(1-on/{NB},2))"
         zA = f"1.0+0.10*{pA}"; zB = f"1.10-0.10*{pB}"
         trans = "slideleft" if i % 2 == 1 else "slideright"
-        inputs = ["-y", "-loop", "1", "-i", bgA, "-loop", "1", "-i", bgB]
+        inputs = ["-y", "-loop", "1", "-i", bgA, "-loop", "1", "-i", bgB, "-loop", "1", "-i", chrome_png]
         for st in states:
             inputs += ["-loop", "1", "-i", st[0]]
         cov = "scale=3240:5760:force_original_aspect_ratio=increase,crop=3240:5760"
         zp = f"x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920:fps={FPS}"
         fc = (f"[0:v]{cov},zoompan=z='{zA}':d={framesA}:{zp},format=yuv420p[a];"
               f"[1:v]{cov},zoompan=z='{zB}':d={framesB}:{zp},format=yuv420p[b];"
-              f"[a][b]xfade=transition={trans}:duration={TR}:offset={SW}[bg];")
+              f"[a][b]xfade=transition={trans}:duration={TR}:offset={SW}[bgx];"
+              f"[bgx][2:v]overlay=0:0[bg];")
         prev = "bg"
-        for k, st in enumerate(states, start=2):
+        for k, st in enumerate(states, start=3):
             cs, ce = st[1], st[2]
             # 문구를 부드럽게 페이드 인 (알파 페이드) → 매끄러운 등장
             fc += (f"[{k}:v]format=yuva420p,fade=t=in:st={cs}:d=0.28:alpha=1[cf{k}];"

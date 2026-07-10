@@ -26,4 +26,8 @@ CARDNEWS = {
         {"file": "bg1.png"}, {"file": "bg2.png"}, {"file": "bg3.png"},
         {"file": "bg4.png"}, {"file": "bg5.png"}, {"file": "bg6.png"},
     ],
+    "shorts_bg2": [
+        {"file": "bg1b.png"}, {"file": "bg2b.png"}, {"file": "bg3b.png"},
+        {"file": "bg4b.png"}, {"file": "bg5b.png"}, {"file": "bg6b.png"},
+    ],
 }
