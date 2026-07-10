@@ -95,10 +95,11 @@ function currentLangStage() {
   const m = ageMonths();
   return LANG_MILESTONES.find(s => m >= s.startM && m <= s.endM) || null;
 }
-// 취학 일정: 만 6세가 되는 해의 다음 해 3월 입학 → 입학연도 = 출생연도 + 7
-function schoolEntryDate() { return new Date(birth().getFullYear() + 7, 2, 2); }
+// 취학 일정: 만 6세가 되는 해의 다음 해 3월 입학 → 입학연도 = 출생연도 + 7 (조기·연기 시 ±1)
+function schoolEntryYear() { return birth().getFullYear() + 7 + (Number(state.schoolAdj) || 0); }
+function schoolEntryDate() { return new Date(schoolEntryYear(), 2, 2); }
 function schoolMilestones() {
-  const y = birth().getFullYear() + 7;
+  const y = schoolEntryYear();
   return [
     { date: new Date(y - 1, 9, 1), name: '취학아동 명부 작성 시작', short: '명부작성', desc: '조기입학·입학연기 신청도 10~12월에 주민센터에서 해요' },
     { date: new Date(y - 1, 11, 10), name: '취학통지서 확인', short: '통지서', desc: '12월 20일까지 발부돼요 (정부24 온라인 발급 지역도)' },
@@ -376,7 +377,7 @@ function renderSchoolPrep() {
 
   return `
     <div class="lang-stage school current">
-      <div class="lang-title">🏫 취학 준비 <span class="school-dday">${entry.getFullYear()}년 3월 입학 · ${dday}</span></div>
+      <div class="lang-title">🏫 취학 준비 <span class="school-dday">${entry.getFullYear()}년 3월 입학${Number(state.schoolAdj) < 0 ? ' · 조기' : Number(state.schoolAdj) > 0 ? ' · 연기' : ''} · ${dday}</span></div>
       <div class="school-bar"><div class="school-fill" id="school-fill" style="width:${pct}%"></div></div>
       <div class="school-progress"><span id="school-count">${done}</span>/${total} 완료 ${done === total ? '· 준비 끝, 멋져요! 🎒' : ''}</div>
       <div class="school-tl">${tl}</div>
@@ -776,6 +777,87 @@ function buildICS() {
   return lines.join('\r\n');
 }
 
+// ---------- 성장 리포트 (인쇄/PDF) ----------
+function buildReportHTML() {
+  const nm = state.name || '아기';
+  const d = ageDays(), m = ageMonths();
+
+  // 접종·검진 현황
+  const events = allEvents();
+  const doneN = events.filter(ev => state.done[ev.id]).length;
+  const overdue = events.filter(ev => eventStatus(ev) === 'overdue');
+  const next = events.filter(ev => ['open', 'upcoming'].includes(eventStatus(ev))).slice(0, 4);
+
+  // 발달 체크 (지나온 단계별 체크 수)
+  const langRows = LANG_MILESTONES.filter(s => s.startM <= m).map(s => {
+    const c = s.items.filter((_, i) => state.done[`lang-${s.startM}-${i}`]).length;
+    return `<tr><td>${s.title}</td><td class="rp-num">${c}/${s.items.length}</td></tr>`;
+  }).join('');
+
+  // 최근 14일 기록 통계
+  const since = addDays(today(), -13);
+  const inRange = arr => arr.filter(x => parseDate(x.d) >= since);
+  const feeds = inRange(state.records.feed);
+  const feedDays = new Set(feeds.map(f => f.d)).size;
+  const milk = feeds.filter(f => f.type === '분유');
+  const diapers = inRange(state.records.pee).length + inRange(state.records.poop).length;
+  const danger = inRange(state.records.poop).filter(p => {
+    const c = POOP_COLORS.find(x => x.id === p.color); return c && c.level === 'danger';
+  }).length;
+  let sleepTot = 0, sleepDays = 0;
+  for (let i = 0; i < 14; i++) {
+    const mins = daySleepMinutes(isoDate(addDays(today(), -i)));
+    if (mins > 0) { sleepTot += mins; sleepDays++; }
+  }
+  const recDays = feedDays || sleepDays || diapers ? Math.max(feedDays, sleepDays, 1) : 0;
+  const statRows = recDays ? `
+    ${feeds.length ? `<tr><td>수유</td><td>하루 평균 ${(feeds.length / feedDays).toFixed(1)}회${milk.length ? ` · 분유 평균 ${Math.round(milk.reduce((a, f) => a + (f.amt || 0), 0) / feedDays)}ml/일` : ''}</td></tr>` : ''}
+    ${sleepDays ? `<tr><td>수면</td><td>하루 평균 ${fmtMins(Math.round(sleepTot / sleepDays))}</td></tr>` : ''}
+    ${diapers ? `<tr><td>기저귀</td><td>하루 평균 ${(diapers / 14).toFixed(1)}회${danger ? ` · <b>주의 색 변 ${danger}회</b>` : ''}</td></tr>` : ''}`
+    : '<tr><td colspan="2">최근 14일 기록이 없어요.</td></tr>';
+
+  // 이유식·알레르기
+  const solids = state.records.solids;
+  const reacted = solids.filter(s => s.status === 'react');
+  const solidLine = solids.length
+    ? `시도한 재료 ${solids.length}가지: ${solids.map(s => s.name).join(', ')}` +
+      (reacted.length ? `<br><b>⚠️ 반응 있었던 재료: ${reacted.map(s => s.name).join(', ')}</b>` : '')
+    : '기록 없음';
+
+  // 취학 준비 (해당 시)
+  let schoolSec = '';
+  if (schoolPrepVisible()) {
+    const { done, total } = schoolPrepProgress();
+    schoolSec = `<div class="rp-sec"><h2>🏫 취학 준비</h2>
+      <p>${schoolEntryYear()}년 3월 입학 예정 · 체크리스트 ${done}/${total} 완료</p></div>`;
+  }
+
+  return `
+    <h1>🌷 ${nm} 성장 리포트</h1>
+    <p class="rp-meta">생년월일 ${fmt(birth())} · 오늘 기준 D+${d} (${m}개월) · 작성일 ${fmt(today())}</p>
+
+    <div class="rp-sec"><h2>💉 접종 · 검진</h2>
+      <p>완료 ${doneN}건 / 전체 ${events.length}건${overdue.length ? ` · <b>미체크 ${overdue.length}건</b>` : ' · 지난 일정 모두 체크 완료'}</p>
+      ${overdue.length ? `<p class="rp-small">미체크: ${overdue.slice(0, 6).map(ev => ev.label).join(', ')}${overdue.length > 6 ? ' 외' : ''} — 완료했는데 체크만 안 했을 수 있어요</p>` : ''}
+      ${next.length ? `<table class="rp"><tr><th>다가오는 일정</th><th>시기</th></tr>
+        ${next.map(ev => `<tr><td>${ev.label}</td><td class="rp-num">${fmt(ev.start)}${ev.end > ev.start ? `~${fmt(ev.end)}` : ''}</td></tr>`).join('')}</table>` : ''}
+    </div>
+
+    <div class="rp-sec"><h2>🗣️ 발달 체크포인트</h2>
+      <table class="rp"><tr><th>시기</th><th>체크</th></tr>${langRows}</table>
+      <p class="rp-small">보호자가 체크한 항목 수예요. 진단이 아닌 관찰 기록입니다.</p>
+    </div>
+
+    <div class="rp-sec"><h2>📔 최근 14일 기록</h2>
+      <table class="rp">${statRows}</table>
+    </div>
+
+    <div class="rp-sec"><h2>🥣 이유식 · 알레르기</h2><p>${solidLine}</p></div>
+    ${schoolSec}
+
+    <p class="rp-foot">베이비블룸(BabyBloom) · 참고용 기록 요약입니다. 진단·처방은 소아청소년과 의사와 상담하세요.</p>`;
+}
+
 // ---------- 이벤트 ----------
 document.addEventListener('DOMContentLoaded', () => {
   // 온보딩 제출
@@ -786,6 +868,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!birthV) return;
     state = {
       name, birth: birthV, due: $('#in-due').value || '', rota: $('#in-rota').value,
+      schoolAdj: Number($('#in-school').value) || 0,
       done: (state && state.done) || {},
       records: Object.assign({}, EMPTY_RECORDS, state && state.records),
     };
@@ -912,7 +995,15 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#in-birth').value = state.birth || '';
     $('#in-due').value = state.due || '';
     $('#in-rota').value = state.rota || 'rotateq';
+    $('#in-school').value = String(Number(state.schoolAdj) || 0);
     $('#onboarding').hidden = false; $('#app').hidden = true;
+  });
+
+  // 성장 리포트 인쇄/PDF
+  $('#btn-report').addEventListener('click', () => {
+    if (!state || !state.birth) return;
+    $('#report-view').innerHTML = buildReportHTML();
+    window.print();
   });
 
   // 캘린더 내보내기

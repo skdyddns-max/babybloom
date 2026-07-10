@@ -40,6 +40,14 @@
           <option value="rotarix">로타릭스 (2회 접종)</option>
         </select>
       </label>
+      <label>초등학교 입학 시기 (선택)
+        <small>조기입학·입학연기를 신청했다면 바꿔주세요. 취학 준비 일정에 반영돼요.</small>
+        <select id="in-school">
+          <option value="0">표준 (만 6세가 지난 3월)</option>
+          <option value="-1">1년 조기입학</option>
+          <option value="1">1년 입학연기</option>
+        </select>
+      </label>
       <button type="submit">일정 자동으로 만들기 ✨</button>
     </form>
 
@@ -156,6 +164,15 @@
         <h3>🗓️ 최근 7일 기록</h3>
         <div id="day-log"></div>
       </div>
+
+      <div class="rec-block">
+        <h3>📄 성장 리포트</h3>
+        <p class="rec-sub">접종·발달·최근 2주 기록을 한 장으로 정리해드려요. 소아과 진료나 어린이집 상담 때 보여주기 좋아요.</p>
+        <div class="backup-btns">
+          <button type="button" id="btn-report">리포트 만들기 · 인쇄/PDF 저장</button>
+        </div>
+        <p class="rec-sub" style="margin-top:6px">버튼을 누르면 인쇄 화면이 열려요. 아이폰에서는 공유 → 프린트에서 PDF로 저장할 수 있어요.</p>
+      </div>
       </div><!-- /view-rec -->
 
       <div id="view-pattern" hidden>
@@ -228,6 +245,9 @@
       <button type="button" id="sheet-save" class="sheet-save">저장 ✓</button>
     </div>
   </div>
+
+  <!-- 성장 리포트 (인쇄 전용) -->
+  <div id="report-view"></div>
 
   <script src="js/config.js"></script>
   <script src="js/data.js"></script>
