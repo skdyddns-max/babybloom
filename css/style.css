@@ -339,6 +339,9 @@ nav {
 
 /* ---- 푸터 고지 ---- */
 .disclaimer { margin: 20px 20px; font-size: 12.5px; color: var(--ink-soft); text-align: center; }
+.bloom-family { margin: 8px 20px 24px; padding-top: 16px; border-top: 1px dashed var(--line, #e6e0d4); font-size: 12.5px; color: var(--ink-soft); text-align: center; line-height: 1.9; }
+.bloom-family a { color: var(--brand, #6DBE8A); font-weight: 700; text-decoration: none; }
+.bloom-family a:hover { text-decoration: underline; }
 
 /* ---- 소형 화면(360px 이하) ---- */
 @media (max-width: 374px) {
