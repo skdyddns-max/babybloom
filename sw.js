@@ -1,5 +1,5 @@
 /* BabyBloom 서비스워커 — 오프라인 캐시 (앱 셸 cache-first + 백그라운드 갱신) */
-const VERSION = 'babybloom-v14';
+const VERSION = 'babybloom-v15';
 const SHELL = [
   './',
   './index.html',
@@ -28,6 +28,8 @@ self.addEventListener('activate', e => {
 // 같은 출처: stale-while-revalidate (캐시 먼저, 뒤에서 갱신) / 외부(CDN 폰트 등): network→cache 폴백
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  // 방문 집계는 캐시·가로채기 안 함(정확한 카운트 위해 항상 네트워크로)
+  if (e.request.url.includes('goatcounter.com') || e.request.url.includes('gc.zgo.at')) return;
   const sameOrigin = new URL(e.request.url).origin === self.location.origin;
   e.respondWith(
     caches.open(VERSION).then(async cache => {

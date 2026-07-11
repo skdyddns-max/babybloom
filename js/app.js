@@ -1050,6 +1050,16 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 
+  // 방문자 집계(GoatCounter) — 코드가 있을 때만, 개인정보 없이 방문/페이지뷰만
+  if (typeof GOATCOUNTER_CODE === 'string' && GOATCOUNTER_CODE) {
+    window.goatcounter = { no_onload: false };
+    const s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://gc.zgo.at/count.js';
+    s.setAttribute('data-goatcounter', `https://${GOATCOUNTER_CODE}.goatcounter.com/count`);
+    document.head.appendChild(s);
+  }
+
   render();
 });
 

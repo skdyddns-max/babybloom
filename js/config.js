@@ -5,3 +5,9 @@ const SUPABASE_CONFIG = {
   url: '',      // 예: 'https://xxxx.supabase.co'
   anonKey: '',  // Project Settings → API → anon public
 };
+
+/* 방문자 집계(GoatCounter) — docs/방문자집계-설정.md 참고
+ * GoatCounter에서 만든 코드(사이트 이름)를 넣으면 방문 집계가 켜집니다.
+ * 예: 'babybloom' → https://babybloom.goatcounter.com 대시보드에서 확인.
+ * 비어 있으면 추적 코드를 아예 로드하지 않아요(개인정보 안전). */
+const GOATCOUNTER_CODE = '';
