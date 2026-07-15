@@ -13,8 +13,33 @@
   --red-text: #D6336C;     /* 경고: 원색 */
   --line: #EADCC9;
   --radius: 16px;
+  /* v1.3 redesign — friendly/bento tokens */
+  --success: #2B8A3E;
+  --warning: #D97706;
+  --danger: #D6336C;
+  --shadow-sm: 0 2px 8px rgba(139, 107, 74, 0.06);
+  --shadow-md: 0 4px 16px rgba(139, 107, 74, 0.10);
+  --shadow-lift: 0 8px 22px rgba(139, 107, 74, 0.16);
+  --ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --chart-surface: #FCFAF5;
+  --chart-grid: #ECE2D2;
+  --focus: #E8590C;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* tabular figures for data-heavy readouts */
+.hero .dday, .sheet-big, .evt-time, .stats-box, .stage-box,
+#report-view table.rp, .chart-hours span, .school-progress span, .cat-count {
+  font-variant-numeric: tabular-nums;
+}
+/* accessible focus ring (keyboard only) */
+button:focus-visible, a:focus-visible, input:focus-visible,
+select:focus-visible, summary:focus-visible, .swatch:focus-visible, .tab:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus) 55%, white);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
 html { -webkit-text-size-adjust: 100%; }
 body {
   font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
@@ -27,6 +52,28 @@ body {
 }
 [hidden] { display: none !important; }
 button, label, .tab { touch-action: manipulation; }
+
+/* ---- v1.3 interaction polish (hover / active / transitions) ---- */
+button { transition: transform .12s var(--ease), background-color .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease), opacity .2s var(--ease); }
+#onboard-form button, .inline-form button, .sheet-save, .fam-join button, .ics-btn { will-change: transform; }
+#onboard-form button:hover, .inline-form button:hover, .sheet-save:hover, .fam-join button:hover {
+  background: color-mix(in srgb, var(--peach-deep) 88%, black); box-shadow: var(--shadow-md);
+}
+#onboard-form button:active, .inline-form button:active, .sheet-save:active, .fam-join button:active, .amt-btn:active, .mini:active { transform: translateY(1px) scale(0.985); }
+#btn-edit:hover, .backup-btns button:hover { border-color: var(--peach-deep); color: var(--peach-deep); }
+.ics-btn:hover { box-shadow: 0 5px 16px rgba(76, 141, 245, 0.4); }
+.ics-btn:active { transform: translateY(1px); }
+.row { transition: border-color .2s var(--ease), box-shadow .2s var(--ease), transform .12s var(--ease); }
+.row:hover { box-shadow: var(--shadow-md); }
+.row:active { transform: scale(0.99); }
+.swatch { transition: border-color .18s var(--ease), background .18s var(--ease), transform .1s var(--ease), box-shadow .18s var(--ease); }
+.swatch:hover { border-color: var(--peach-deep); box-shadow: var(--shadow-sm); }
+.tab { transition: color .2s var(--ease), background .2s var(--ease); }
+.card { transition: box-shadow .2s var(--ease); }
+.seg-btn, .kind-btn, .tag, .quick .q-ico { transition: all .18s var(--ease); }
+.tab:hover:not(.active) { background: #FBF3E9; }
+.quick:hover .q-ico { box-shadow: 0 3px 10px rgba(0,0,0,.2); }
+.seg-btn:hover:not(.active) { color: var(--ink); }
 
 /* ---- 헤더 ---- */
 header { padding: 20px 18px 8px; display: flex; justify-content: space-between; align-items: center; }
@@ -191,23 +238,27 @@ header h1 .logo { color: var(--peach-deep); }
 .cat-count.full { color: #fff; background: #2B8A3E; }
 .school-acc .check-item input:checked + span { opacity: .5; text-decoration: line-through; }
 
-/* ---- 성장 리포트 (인쇄 전용) ---- */
+/* ---- 성장 리포트 (인쇄 전용) — 전문 리포트 레이아웃 ---- */
 #report-view { display: none; }
-#report-view h1 { font-size: 21px; margin-bottom: 4px; }
-#report-view h2 { font-size: 15px; margin-bottom: 5px; }
-#report-view .rp-meta { font-size: 12.5px; color: #444; margin-bottom: 14px; }
-#report-view .rp-sec { margin-bottom: 14px; }
-#report-view p { font-size: 13px; margin: 3px 0; }
-#report-view .rp-small { font-size: 11.5px; color: #555; }
-#report-view table.rp { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 12.5px; }
-#report-view table.rp th { text-align: left; font-size: 11.5px; color: #555; border-bottom: 1.5px solid #999; padding: 3px 6px; }
-#report-view table.rp td { border-bottom: 1px solid #ddd; padding: 4px 6px; }
-#report-view table.rp .rp-num { text-align: right; white-space: nowrap; }
-#report-view .rp-foot { margin-top: 18px; font-size: 11px; color: #666; border-top: 1px solid #ccc; padding-top: 8px; }
+#report-view h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.4px; margin-bottom: 6px; color: #1F1A14; padding-bottom: 10px; border-bottom: 2.5px solid var(--peach-deep); }
+#report-view h2 { font-size: 14px; font-weight: 800; letter-spacing: -0.2px; margin-bottom: 7px; color: #2A231B; padding-left: 9px; border-left: 3.5px solid var(--peach-deep); line-height: 1.3; }
+#report-view .rp-meta { font-size: 12px; color: #6B6156; margin: 8px 0 20px; font-variant-numeric: tabular-nums; }
+#report-view .rp-sec { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #EDE6DB; }
+#report-view .rp-sec:last-of-type { border-bottom: none; }
+#report-view p { font-size: 13px; margin: 4px 0; color: #362D24; }
+#report-view .rp-small { font-size: 11.5px; color: #7A7064; margin-top: 4px; }
+#report-view table.rp { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12.5px; }
+#report-view table.rp th { text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #8A7F70; border-bottom: 1.5px solid #4A4038; padding: 5px 8px; }
+#report-view table.rp td { border-bottom: 1px solid #EDE6DB; padding: 6px 8px; color: #2E2820; }
+#report-view table.rp tr:nth-child(even) td { background: #FBF7F0; }
+#report-view table.rp .rp-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; color: #1F1A14; }
+#report-view .rp-foot { margin-top: 22px; font-size: 10.5px; color: #8A7F70; border-top: 1.5px solid #D9CFC0; padding-top: 10px; line-height: 1.6; }
 @media print {
   body { background: #fff !important; padding: 0; }
   body > :not(#report-view) { display: none !important; }
-  #report-view { display: block !important; color: #000; }
+  #report-view { display: block !important; color: #000; padding: 8px 4px; }
+  #report-view .rp-sec { break-inside: avoid; }
+  #report-view table.rp tr:nth-child(even) td { background: #F4F0E9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 .toy-skip { font-size: 13.5px; color: #8F4F27; background: #FAF1E7; border-radius: 10px; padding: 9px 12px; margin-top: 8px; font-weight: 500; }
 
@@ -233,9 +284,11 @@ header h1 .logo { color: var(--peach-deep); }
 .inline-form input { flex: 1; }
 .inline-form input[type="time"] { flex: 0 0 96px; padding: 10px 6px; }
 .inline-form button { border: none; background: var(--peach-deep); color: #fff; border-radius: 10px; padding: 10px 15px; font-weight: 800; font-size: 14.5px; cursor: pointer; font-family: inherit; white-space: nowrap; min-height: 48px; }
-.stats-box { background: #FAF5EC; border-radius: 11px; padding: 11px 14px; font-size: 14.5px; margin-bottom: 10px; }
+.stats-box { background: linear-gradient(180deg, #FDF9F1, #FAF4E9); border: 1px solid var(--line); border-left: 3px solid var(--peach-deep); border-radius: 12px; padding: 12px 15px; font-size: 14.5px; margin-bottom: 10px; line-height: 1.75; box-shadow: var(--shadow-sm); }
+.stats-box b { color: var(--ink); font-weight: 800; }
 .warn-text { color: var(--red-text); font-size: 13.5px; font-weight: 600; }
-.stage-box { background: #F2F7EE; border-radius: 11px; padding: 11px 14px; font-size: 14.5px; margin-bottom: 11px; }
+.stage-box { background: linear-gradient(180deg, #F5FAF1, #EFF6EA); border: 1px solid var(--line); border-left: 3px solid var(--sage-deep); border-radius: 12px; padding: 12px 15px; font-size: 14.5px; margin-bottom: 11px; line-height: 1.7; box-shadow: var(--shadow-sm); }
+.stage-box b { color: var(--sage-deep); font-weight: 800; }
 .allergy-info { margin-top: 11px; }
 .allergy-info summary { font-size: 14.5px; font-weight: 800; color: var(--red-text); cursor: pointer; padding: 4px 0; }
 .allergy-info ul { margin: 8px 0 2px 19px; font-size: 14px; color: var(--ink); }
@@ -276,20 +329,22 @@ header h1 .logo { color: var(--peach-deep); }
 .evt-text { flex: 1; min-width: 0; font-weight: 600; }
 
 /* ---- 주간 패턴 차트 ---- */
-.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-soft); font-weight: 600; margin: 6px 0 10px; }
-.legend i { display: inline-block; width: 14px; height: 6px; border-radius: 3px; margin-right: 4px; vertical-align: middle; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-soft); font-weight: 600; margin: 8px 0 12px; align-items: center; }
+.legend span { display: inline-flex; align-items: center; }
+.legend i { display: inline-block; width: 15px; height: 5px; border-radius: 3px; margin-right: 5px; vertical-align: middle; }
 .chart { display: flex; gap: 6px; }
-.chart-hours { position: relative; width: 26px; height: 432px; flex-shrink: 0; }
-.chart-hours span { position: absolute; right: 2px; transform: translateY(-50%); font-size: 11px; color: var(--ink-soft); font-weight: 600; }
-.chart-grid { display: flex; gap: 4px; flex: 1; }
+.chart-hours { position: relative; width: 30px; height: 432px; flex-shrink: 0; }
+.chart-hours span { position: absolute; right: 4px; transform: translateY(-50%); font-size: 11px; color: var(--ink-soft); font-weight: 600; letter-spacing: -0.2px; }
+.chart-grid { display: flex; gap: 5px; flex: 1; }
 .chart-day { flex: 1; min-width: 0; }
-.chart-col { position: relative; height: 432px; background: #F4EFE6;
-  background-image: repeating-linear-gradient(to bottom, transparent 0 107px, #E4DACA 107px 108px);
-  border-radius: 7px; overflow: hidden; }
-.m-bar { position: absolute; left: 12%; width: 76%; height: 5px; border-radius: 3px; transform: translateY(-50%); }
+.chart-col { position: relative; height: 432px; background-color: var(--chart-surface);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 107px, var(--chart-grid) 107px 108px);
+  border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.chart-day:last-child .chart-col { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--peach-deep) 30%, transparent); }
+.m-bar { position: absolute; left: 12%; width: 76%; height: 5px; border-radius: 3px; transform: translateY(-50%); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
 .m-poop { position: absolute; left: 50%; transform: translate(-50%, -50%); font-size: 14px; line-height: 1; }
-.m-sleep { position: absolute; left: 6%; width: 88%; background: rgba(112, 72, 232, .3); border-radius: 5px; }
-.chart-label { text-align: center; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); margin-top: 5px; }
+.m-sleep { position: absolute; left: 6%; width: 88%; background: rgba(112, 72, 232, .28); border-radius: 5px; }
+.chart-label { text-align: center; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); margin-top: 6px; }
 .chart-label.today { color: var(--peach-deep); }
 
 /* ---- 수유 기록 바텀시트 ---- */
