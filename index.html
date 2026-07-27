@@ -215,9 +215,13 @@
       </div>
       <div class="sheet-sec">
         <div class="sheet-label">시간 <input type="time" id="sheet-time-in" title="직접 입력"></div>
-        <div class="sheet-big" id="sheet-time">--:--</div>
-        <input type="range" id="time-slider" min="-240" max="60" step="5" value="0">
-        <div class="sheet-hint"><span>-4시간</span><span>지금</span><span>+1시간</span></div>
+        <div class="amt-row">
+          <button type="button" class="amt-btn" data-tmin="-10">−10분</button>
+          <div class="sheet-big" id="sheet-time" style="margin:0">--:--</div>
+          <button type="button" class="amt-btn" data-tmin="10">＋10분</button>
+        </div>
+        <input type="range" id="time-slider" min="-120" max="30" step="5" value="0">
+        <div class="sheet-hint"><span>-2시간</span><span>지금</span><span>+30분</span></div>
       </div>
       <div class="sheet-sec" id="sheet-feed-sec">
         <div class="sheet-label">양</div>
@@ -226,7 +230,15 @@
           <div class="sheet-big"><span id="sheet-amt">120</span><small id="sheet-unit">ml</small></div>
           <button type="button" class="amt-btn" data-amt="10">＋10</button>
         </div>
-        <input type="range" id="amt-slider" min="0" max="400" step="5" value="120">
+        <input type="range" id="amt-slider" min="0" max="400" step="10" value="120">
+      </div>
+      <div class="sheet-sec" id="sheet-combo" hidden>
+        <label class="combo-check"><input type="checkbox" id="combo-on"> 🍼 분유 보충도 같이 기록</label>
+        <div class="amt-row" id="combo-row" hidden>
+          <button type="button" class="amt-btn" data-camt="-10">−10</button>
+          <div class="sheet-big" style="font-size:30px;margin:0"><span id="combo-amt">60</span><small>ml</small></div>
+          <button type="button" class="amt-btn" data-camt="10">＋10</button>
+        </div>
       </div>
       <div class="sheet-sec" id="sheet-diaper-sec" hidden>
         <div class="sheet-label">종류</div>

@@ -607,10 +607,10 @@ function renderRecord() {
 
 // ---------- 수유 기록 바텀시트 ----------
 const FEED_CFG = {
-  '분유': { unit: 'ml', max: 400, step: 5, def: 120 },
-  '유축': { unit: 'ml', max: 400, step: 5, def: 100 },
+  '분유': { unit: 'ml', max: 400, step: 10, def: 120 },
+  '유축': { unit: 'ml', max: 400, step: 10, def: 100 },
   '모유': { unit: '분', max: 60, step: 1, def: 15 },
-  '이유식': { unit: 'g', max: 300, step: 5, def: 60 },
+  '이유식': { unit: 'g', max: 300, step: 10, def: 60 },
 };
 let sheetType = '분유';
 let sheetMode = 'feed';          // 'feed' | 'diaper' | 'sleep'
@@ -651,6 +651,11 @@ function openFeedSheet(type) {
   $('#sheet-unit').textContent = cfg.unit;
   openSheetCommon('feed', `${CATS[type].e} ${type}`);
   updateSheetAmt((state.lastAmt && state.lastAmt[type]) || cfg.def);
+  // 이유식일 때만: 분유 보충 병행 기록 옵션
+  $('#sheet-combo').hidden = type !== '이유식';
+  $('#combo-on').checked = false;
+  $('#combo-row').hidden = true;
+  $('#combo-amt').textContent = (state.lastComboAmt || 60);
 }
 
 function openDiaperSheet(kind) {
@@ -696,6 +701,7 @@ function updateSheetTime() {
 }
 function updateSheetAmt(v) {
   const cfg = FEED_CFG[sheetType];
+  v = Math.round(v / cfg.step) * cfg.step;      // 단위에 맞게 스냅 (분유 10ml)
   v = Math.min(cfg.max, Math.max(0, v));
   $('#sheet-amt').textContent = v;
   $('#amt-slider').value = v;
@@ -713,6 +719,14 @@ function saveFeedSheet() {
     state.lastAmt = state.lastAmt || {};
     state.lastAmt[sheetType] = amt;
     state.records.feed.push({ d, t, type: sheetType, amt, ...extra });
+    // 이유식 + 분유 보충 병행 기록
+    if (sheetType === '이유식' && $('#combo-on').checked) {
+      const camt = Number($('#combo-amt').textContent) || 0;
+      if (camt > 0) {
+        state.records.feed.push({ d, t, type: '분유', amt: camt });
+        state.lastComboAmt = camt;
+      }
+    }
     state.records.feed.sort((a, b) => dtOf(a) - dtOf(b));
   } else if (sheetMode === 'diaper') {
     if (sheetKind === 'poop') {
@@ -950,8 +964,22 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#time-slider').addEventListener('input', () => { $('#sheet-time-in').value = ''; updateSheetTime(); });
   $('#sheet-time-in').addEventListener('change', updateSheetTime);
   $('#amt-slider').addEventListener('input', () => updateSheetAmt(Number($('#amt-slider').value)));
-  document.querySelectorAll('.amt-btn').forEach(b => b.addEventListener('click', () =>
+  document.querySelectorAll('.amt-btn[data-amt]').forEach(b => b.addEventListener('click', () =>
     updateSheetAmt(Number($('#sheet-amt').textContent) + Number(b.dataset.amt))));
+  // 시간 −10분/＋10분 정밀 조정 (슬라이더 범위 밖이면 직접 입력으로 유도)
+  document.querySelectorAll('.amt-btn[data-tmin]').forEach(b => b.addEventListener('click', () => {
+    const ts = $('#time-slider');
+    $('#sheet-time-in').value = '';
+    const nv = Number(ts.value) + Number(b.dataset.tmin);
+    ts.value = Math.min(Number(ts.max), Math.max(Number(ts.min), nv));
+    updateSheetTime();
+  }));
+  // 이유식+분유 병행
+  $('#combo-on').addEventListener('change', () => { $('#combo-row').hidden = !$('#combo-on').checked; });
+  document.querySelectorAll('.amt-btn[data-camt]').forEach(b => b.addEventListener('click', () => {
+    const v = Math.min(400, Math.max(0, Number($('#combo-amt').textContent) + Number(b.dataset.camt)));
+    $('#combo-amt').textContent = v;
+  }));
   $('#sheet-save').addEventListener('click', saveFeedSheet);
   document.querySelectorAll('[data-kind]').forEach(b => b.addEventListener('click', () => setSheetKind(b.dataset.kind)));
   document.querySelectorAll('[data-sleep]').forEach(b => b.addEventListener('click', () => setSheetSleep(b.dataset.sleep)));
@@ -1061,6 +1089,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   render();
+  // 주 사용 화면 = 기록: 아기 정보가 있으면 기록 탭으로 시작
+  if (state && state.birth) switchTab('record');
 });
 
 function switchTab(tab) {
