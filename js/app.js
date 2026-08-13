@@ -102,7 +102,7 @@ function schoolMilestones() {
   const y = schoolEntryYear();
   return [
     { date: new Date(y - 1, 9, 1), name: '취학아동 명부 작성 시작', short: '명부작성', desc: '조기입학·입학연기 신청도 10~12월에 주민센터에서 해요' },
-    { date: new Date(y - 1, 11, 10), name: '취학통지서 확인', short: '통지서', desc: '12월 20일까지 발부돼요 (정부24 온라인 발급 지역도)' },
+    { date: new Date(y - 1, 11, 10), name: '취학통지서 확인', short: '통지서', desc: '12월 20일까지 발부돼요 (정부24에서 온라인 발급·제출도 가능)' },
     { date: new Date(y, 0, 4), name: '예비소집 시즌', short: '예비소집', desc: '1월 초·학교마다 달라요. 취학통지서를 챙겨 참석하세요' },
     { date: new Date(y, 2, 2), name: '초등학교 입학', short: '입학', desc: '드디어 학교에 가요! 🎒' },
   ];
